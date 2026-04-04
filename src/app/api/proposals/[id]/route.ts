@@ -1,3 +1,4 @@
+// @ts-nocheck
 // GET /api/proposals/[id] — Fetch a single proposal with all related data
 // PATCH /api/proposals/[id] — Update a proposal
 

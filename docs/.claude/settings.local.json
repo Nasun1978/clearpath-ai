@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(export PATH=\"/usr/local/bin:/opt/homebrew/bin:$HOME/.nvm/versions/node/*/bin:$PATH\")",
+      "Bash(command -v node npm yarn pnpm)",
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(mdfind \"kMDItemFSName == ''''npm''''\")",
+      "Bash(ls -la /Users/stevenkennedy/Downloads/clearpath-ai/src/app/api/*/route.ts /Users/stevenkennedy/Downloads/clearpath-ai/src/app/api/*/*/route.ts)"
+    ]
+  }
+}

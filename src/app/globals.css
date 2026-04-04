@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg-deep: #080E1A;
+  --bg-card: #0F1729;
+  --border: #1E293B;
+  --teal: #0D9488;
+  --teal-glow: #14B8A6;
+  --amber: #D97706;
+}
+
+body {
+  background: var(--bg-deep);
+  color: #F1F5F9;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }

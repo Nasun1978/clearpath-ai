@@ -310,12 +310,22 @@ function KanbanColumn({ stage, config, deals, onDrop, onDragStart, onDelete }: C
 export default function DealsPage() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const dragging = useRef<Deal | null>(null);
 
   useEffect(() => {
     fetch("/api/deals")
       .then((r) => r.json())
-      .then((d) => setDeals(d.deals ?? []))
+      .then((d) => {
+        if (d.error) {
+          setFetchError(d.error as string);
+        } else {
+          setDeals(d.deals ?? []);
+        }
+      })
+      .catch((err: unknown) => {
+        setFetchError(err instanceof Error ? err.message : "Failed to load deals");
+      })
       .finally(() => setLoading(false));
 
     // Listen for deals created inside column forms
@@ -405,6 +415,16 @@ export default function DealsPage() {
       <main className="max-w-[1400px] mx-auto px-6 py-8">
         {loading ? (
           <div className="text-center py-20 text-slate-500">Loading pipeline...</div>
+        ) : fetchError ? (
+          <div className="max-w-lg mx-auto mt-20 p-6 bg-red-900/20 border border-red-700/40 rounded-2xl text-center">
+            <p className="text-red-300 font-semibold mb-2">Failed to load deals</p>
+            <p className="text-sm text-red-400/80 font-mono">{fetchError}</p>
+            <p className="text-xs text-slate-500 mt-4">
+              If the deals table does not exist yet, run{" "}
+              <span className="font-mono text-slate-400">migrations/002_deals.sql</span>{" "}
+              in the Supabase SQL Editor.
+            </p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {COLUMNS.map(({ stage, config }) => (

@@ -5,3 +5,9 @@ node_modules/
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+
+# Excel files — keep only public/templates/
+*.xlsx
+*.xls
+!public/templates/*.xlsx
+!public/templates/*.xls

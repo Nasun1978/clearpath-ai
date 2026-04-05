@@ -365,6 +365,29 @@ export interface AIAnalysisResponse {
   summary: string;
 }
 
+export type ProjectType =
+  | "lihtc_9pct"
+  | "lihtc_4pct"
+  | "home"
+  | "htf"
+  | "cdbg"
+  | "mixed_use"
+  | "market_rate"
+  | "other";
+
+export interface Project {
+  id: string;
+  name: string;
+  address: string | null;
+  type: ProjectType;
+  budget: number | null;       // stored as NUMERIC(14,2) — dollars
+  timeline: string | null;     // free-form, e.g. "Q4 2026" or ISO date
+  notes: string | null;
+  user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // --- Dashboard & View Types ---
 
 export interface DashboardStats {

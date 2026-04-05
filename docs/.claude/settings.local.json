@@ -6,7 +6,9 @@
       "Bash(command -v node npm yarn pnpm)",
       "Read(//opt/homebrew/bin/**)",
       "Bash(mdfind \"kMDItemFSName == ''''npm''''\")",
-      "Bash(ls -la /Users/stevenkennedy/Downloads/clearpath-ai/src/app/api/*/route.ts /Users/stevenkennedy/Downloads/clearpath-ai/src/app/api/*/*/route.ts)"
+      "Bash(ls -la /Users/stevenkennedy/Downloads/clearpath-ai/src/app/api/*/route.ts /Users/stevenkennedy/Downloads/clearpath-ai/src/app/api/*/*/route.ts)",
+      "Bash(export PATH=\"/usr/local/bin:/opt/homebrew/bin:$PATH\")",
+      "Bash(timeout 20 npx next dev)"
     ]
   }
 }

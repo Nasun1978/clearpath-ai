@@ -17,7 +17,7 @@ export default function LoginPage() {
 
   function enterDemo() {
     // Set a session cookie that middleware recognises for demo access
-    document.cookie = "clearpath_demo=1; path=/; max-age=86400; SameSite=Lax";
+    document.cookie = "ripespot_demo=1; path=/; max-age=86400; SameSite=Lax";
     router.push("/dashboard");
   }
 

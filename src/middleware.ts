@@ -3,7 +3,7 @@
 // RipeSpot — Route Protection Middleware
 // ============================================================================
 // Protects /dashboard and /submit routes.
-// In demo mode: checks for a clearpath_demo cookie (set by the login page).
+// In demo mode: checks for a ripespot_demo cookie (set by the login page).
 // In production: validates a Supabase session.
 // ============================================================================
 
@@ -22,7 +22,7 @@ export async function middleware(request: NextRequest) {
 
   // ── Demo mode: accept any request with the demo session cookie ───────────
   if (DEMO_MODE) {
-    const demoCookie = request.cookies.get("clearpath_demo");
+    const demoCookie = request.cookies.get("ripespot_demo");
     if (!demoCookie) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirectTo", pathname);

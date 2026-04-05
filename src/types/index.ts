@@ -365,6 +365,21 @@ export interface AIAnalysisResponse {
   summary: string;
 }
 
+export type DealStage = "prospecting" | "due_diligence" | "under_contract" | "closed";
+
+export interface Deal {
+  id: string;
+  address: string;
+  price: number | null;           // NUMERIC(14,2) — dollars
+  projected_roi: number | null;   // percentage, e.g. 12.5 = 12.5%
+  stage: DealStage;
+  notes: string | null;
+  sort_order: number;
+  user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type ProjectType =
   | "lihtc_9pct"
   | "lihtc_4pct"

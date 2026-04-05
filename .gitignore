@@ -11,3 +11,8 @@ next-env.d.ts
 *.xls
 !public/templates/*.xlsx
 !public/templates/*.xls
+
+# Word/Office documents and lock files
+*.docx
+*.doc
+~$*

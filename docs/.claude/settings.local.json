@@ -8,7 +8,32 @@
       "Bash(mdfind \"kMDItemFSName == ''''npm''''\")",
       "Bash(ls -la /Users/stevenkennedy/Downloads/clearpath-ai/src/app/api/*/route.ts /Users/stevenkennedy/Downloads/clearpath-ai/src/app/api/*/*/route.ts)",
       "Bash(export PATH=\"/usr/local/bin:/opt/homebrew/bin:$PATH\")",
-      "Bash(timeout 20 npx next dev)"
+      "Bash(timeout 20 npx next dev)",
+      "WebSearch",
+      "Bash(npx next:*)",
+      "Bash(curl -s http://localhost:3002/api/deals)",
+      "Bash(curl -sv http://localhost:3002/api/deals)",
+      "Bash(curl -sv http://localhost:3002/dashboard/deals)",
+      "Bash(__NEW_LINE_d7a8f2c6c1dbd7a7__ echo:*)",
+      "Bash(curl -s --max-time 5 http://localhost:3000/api/deals)",
+      "Bash(curl -s --max-time 5 http://localhost:3001/api/deals)",
+      "Bash(__NEW_LINE_e61021bc549d65f3__ echo:*)",
+      "Bash(curl -s --max-time 10 http://localhost:3000/api/deals)",
+      "Bash(curl -so /dev/null -w \"HTTP %{http_code} in %{time_total}s\\\\n\" --max-time 10 http://localhost:3000/api/deals)",
+      "Bash(__NEW_LINE_70af0dae240c7234__ python3:*)",
+      "Bash(__NEW_LINE_122f6c698d623ab7__ python3:*)",
+      "Bash(export PATH=\"/usr/local/bin:/opt/homebrew/bin:$PATH\" cd /Users/stevenkennedy/Downloads/clearpath-ai __NEW_LINE_28033547a3815805__ echo \"=== SheetJS installed? ===\" cat package.json)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); deps={**d.get\\(''''dependencies'''',{}\\),**d.get\\(''''devDependencies'''',{}\\)}; print\\(''''xlsx:'''', deps.get\\(''''xlsx'''',''''NOT INSTALLED''''\\)\\); print\\(''''sheetjs-ce:'''', deps.get\\(''''@sheet/xlsx'''',''''NOT INSTALLED''''\\)\\)\" __NEW_LINE_28033547a3815805__ echo \"\" echo \"=== Copying template to public/templates/ ===\" mkdir -p public/templates cp \"Financial Feasibility Template \\(RipeSpot\\).xlsx\" \"public/templates/Financial Feasibility Template \\(RipeSpot\\).xlsx\" ls -lh public/templates/)",
+      "Bash(/usr/local/bin/npm install:*)",
+      "Read(//usr/local/bin/**)",
+      "Bash(ls /opt/homebrew/bin/node*)",
+      "Read(//Users/stevenkennedy/.nvm/versions/**)",
+      "Bash(export PATH=\"/usr/local/bin:$PATH\")",
+      "Bash(node -e \"require\\(''xlsx''\\); console.log\\(''xlsx installed:'', require\\(''./node_modules/xlsx/package.json''\\).version\\)\")",
+      "Bash(npx tsc:*)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(node /Users/stevenkennedy/Downloads/clearpath-ai/node_modules/.bin/tsc --noEmit --project /Users/stevenkennedy/Downloads/clearpath-ai/tsconfig.json)",
+      "Bash(node -e \":*)"
     ]
   }
 }

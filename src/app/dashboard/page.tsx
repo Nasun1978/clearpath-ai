@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import type { ProposalListItem, DashboardStats } from "@/types";
 import {
   formatCurrency,
@@ -57,7 +58,22 @@ export default function DashboardPage() {
               Real Estate Development Platform
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Link href="/dashboard/deals" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
+              Deal Pipeline
+            </Link>
+            <Link href="/dashboard/projects" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
+              Projects
+            </Link>
+            <Link href="/dashboard/financial" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
+              Financial Analysis
+            </Link>
+            <Link href="/dashboard/zoning" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
+              Zoning Lookup
+            </Link>
+            <Link href="/dashboard/compliance" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
+              HOME Compliance
+            </Link>
             <a
               href="/submit"
               className="px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-white hover:bg-brand-light transition-colors"

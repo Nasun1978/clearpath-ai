@@ -1,5 +1,5 @@
 // ============================================================================
-// ClearPath AI — Demo Mode Data
+// RipeSpot — Demo Mode Data
 // ============================================================================
 // Realistic mock proposals, compliance checks, and QAP scores used when
 // NEXT_PUBLIC_DEMO_MODE=true. Allows customer demos without a live backend.

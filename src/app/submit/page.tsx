@@ -94,7 +94,7 @@ export default function SubmitProposalPage() {
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold">Submit Development Proposal</h1>
-            <p className="text-xs text-slate-500 mt-0.5">ClearPath AI — Compliance Review Platform</p>
+            <p className="text-xs text-slate-500 mt-0.5">RipeSpot — Compliance Review Platform</p>
           </div>
           <a href="/dashboard" className="text-sm text-slate-500 hover:text-teal-400">← Dashboard</a>
         </div>

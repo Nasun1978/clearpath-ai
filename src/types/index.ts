@@ -1,5 +1,5 @@
 // ============================================================================
-// ClearPath AI — TypeScript Type Definitions
+// RipeSpot — TypeScript Type Definitions
 // ============================================================================
 // These types mirror the Supabase database schema exactly.
 // If you change the database, update these types to match.

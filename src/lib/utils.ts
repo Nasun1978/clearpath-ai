@@ -1,5 +1,5 @@
 // ============================================================================
-// ClearPath AI — Utility Functions
+// RipeSpot — Utility Functions
 // ============================================================================
 
 import { clsx, type ClassValue } from "clsx";

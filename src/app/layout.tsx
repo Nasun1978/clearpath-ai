@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ClearPath AI — Affordable Housing Compliance Platform",
+  title: "RipeSpot — Real Estate Development Platform",
   description:
     "Agentic AI for evaluating affordable housing development proposals. Built by REO, LLC.",
 };

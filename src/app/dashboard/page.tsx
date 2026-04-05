@@ -51,10 +51,10 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold font-serif tracking-tight">
-              ClearPath AI
+              RipeSpot
             </h1>
             <p className="text-xs text-slate-500 mt-0.5 tracking-wide uppercase">
-              Affordable Housing Compliance Platform
+              Real Estate Development Platform
             </p>
           </div>
           <div className="flex items-center gap-4">

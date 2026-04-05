@@ -65,10 +65,10 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold font-serif tracking-tight text-white">
-            ClearPath AI
+            RipeSpot
           </h1>
           <p className="text-sm text-slate-500 mt-1 tracking-wide uppercase">
-            Affordable Housing Compliance Platform
+            Real Estate Development Platform
           </p>
         </div>
 
@@ -177,7 +177,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-slate-600 mt-6">
-          Built by REO, LLC · Government use only
+          Built by RipeSpot
         </p>
       </div>
     </div>

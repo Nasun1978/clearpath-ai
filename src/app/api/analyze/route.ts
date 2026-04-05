@@ -6,7 +6,7 @@
 // ============================================================================
 // Triggers AI compliance analysis for a proposal.
 // Fetches proposal data from Supabase, sends to Claude, stores results.
-// This is the core engine of ClearPath AI.
+// This is the core engine of RipeSpot.
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       proposal_id,
       compliance_checks_count: checks.length,
       qap_scores_count: qapScores.length,
-      summary: `ClearPath AI analyzed ${proposal.project_name} against ${checks.length} compliance requirements. ${checks.filter((c: any) => c.result === "pass").length} checks passed, ${checks.filter((c: any) => c.result === "fail").length} failed, ${checks.filter((c: any) => c.result === "needs_review").length} require human review.`,
+      summary: `RipeSpot analyzed ${proposal.project_name} against ${checks.length} compliance requirements. ${checks.filter((c: any) => c.result === "pass").length} checks passed, ${checks.filter((c: any) => c.result === "fail").length} failed, ${checks.filter((c: any) => c.result === "needs_review").length} require human review.`,
     });
   }
 

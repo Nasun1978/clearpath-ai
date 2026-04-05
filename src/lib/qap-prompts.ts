@@ -1,5 +1,5 @@
 // ============================================================================
-// ClearPath AI — QAP Scoring Prompts (State-Specific)
+// RipeSpot — QAP Scoring Prompts (State-Specific)
 // ============================================================================
 // These prompts must be updated annually when states publish new QAPs.
 // Currently supports: TX (TDHCA) and LA (LHC)
@@ -26,7 +26,7 @@ const QAP_PROMPTS: Record<string, (year: number) => string> = {
 };
 
 function QAP_TEXAS(year: number): string {
-  return `You are ClearPath AI scoring a LIHTC application against the Texas Department of Housing and Community Affairs (TDHCA) ${year} Qualified Allocation Plan.
+  return `You are RipeSpot scoring a LIHTC application against the Texas Department of Housing and Community Affairs (TDHCA) ${year} Qualified Allocation Plan.
 
 Score the proposal against each of the following TDHCA QAP categories. Return results as a JSON object with a "qap_scores" array.
 
@@ -90,7 +90,7 @@ Return ONLY valid JSON with the format:
 }
 
 function QAP_LOUISIANA(year: number): string {
-  return `You are ClearPath AI scoring a LIHTC application against the Louisiana Housing Corporation (LHC) ${year} Qualified Allocation Plan.
+  return `You are RipeSpot scoring a LIHTC application against the Louisiana Housing Corporation (LHC) ${year} Qualified Allocation Plan.
 
 Score the proposal against each of the following LHC QAP categories. Return results as a JSON object with a "qap_scores" array.
 
@@ -148,7 +148,7 @@ Return ONLY valid JSON with the format:
 }
 
 function QAP_GENERIC(state: string, year: number): string {
-  return `You are ClearPath AI scoring a LIHTC application against general QAP criteria for ${state} (${year}).
+  return `You are RipeSpot scoring a LIHTC application against general QAP criteria for ${state} (${year}).
 
 Since we do not have ${state}'s specific QAP loaded, score against the following common QAP categories used by most state HFAs:
 

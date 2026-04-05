@@ -1,6 +1,6 @@
 // @ts-nocheck
 // ============================================================================
-// ClearPath AI — Route Protection Middleware
+// RipeSpot — Route Protection Middleware
 // ============================================================================
 // Protects /dashboard and /submit routes.
 // In demo mode: checks for a clearpath_demo cookie (set by the login page).

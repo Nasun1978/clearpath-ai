@@ -1,5 +1,5 @@
 // ============================================================================
-// ClearPath AI — Compliance Analysis Prompts
+// RipeSpot — Compliance Analysis Prompts
 // ============================================================================
 //
 // ⚠️  THIS FILE IS THE CORE INTELLECTUAL PROPERTY OF CLEARPATH AI  ⚠️
@@ -64,7 +64,7 @@ export function buildCompliancePrompt(proposal: Proposal): string {
 // PROMPT SECTIONS
 // ============================================================================
 
-const CORE_IDENTITY = `You are ClearPath AI, an expert affordable housing compliance reviewer built for government agencies. You analyze development proposals for compliance with federal, state, and local requirements.
+const CORE_IDENTITY = `You are RipeSpot, an expert affordable housing compliance reviewer built for government agencies. You analyze development proposals for compliance with federal, state, and local requirements.
 
 Your analysis must be:
 - ACCURATE: Every determination must be traceable to a specific regulatory provision

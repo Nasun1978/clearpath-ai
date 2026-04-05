@@ -403,6 +403,40 @@ export interface Project {
   updated_at: string;
 }
 
+// --- LIHTC Checklist Types ---
+
+export interface ChecklistItem {
+  id: string;
+  section: number;
+  text: string;
+  checked: boolean;
+  notes: string;
+  uploaded_file_url: string | null;
+  uploaded_file_name: string | null;
+}
+
+export type ChecklistProjectType =
+  | "new_construction"
+  | "acquisition_rehab"
+  | "rehab_only"
+  | "adaptive_reuse"
+  | "new_construction_bond"
+  | "preservation";
+
+export interface LihtcChecklist {
+  id: string;
+  project_name: string;
+  developer: string;
+  location_parish: string;
+  total_units: number | null;
+  project_type: ChecklistProjectType;
+  date_prepared: string;
+  checklist_items: ChecklistItem[];
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // --- Dashboard & View Types ---
 
 export interface DashboardStats {

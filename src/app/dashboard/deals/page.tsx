@@ -314,19 +314,26 @@ export default function DealsPage() {
   const dragging = useRef<Deal | null>(null);
 
   useEffect(() => {
-    fetch("/api/deals")
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    fetch("/api/deals", { signal: controller.signal })
       .then((r) => r.json())
-      .then((d) => {
+      .then((d: { deals?: Deal[]; error?: string }) => {
         if (d.error) {
-          setFetchError(d.error as string);
+          setFetchError(d.error);
         } else {
           setDeals(d.deals ?? []);
         }
       })
       .catch((err: unknown) => {
-        setFetchError(err instanceof Error ? err.message : "Failed to load deals");
+        const msg = err instanceof Error ? err.message : "Failed to load deals";
+        setFetchError(msg === "signal is aborted due to timeout" || msg.includes("abort")
+          ? "Request timed out. Check that Supabase is configured and the deals table exists."
+          : msg
+        );
       })
-      .finally(() => setLoading(false));
+      .finally(() => { clearTimeout(timeout); setLoading(false); });
 
     // Listen for deals created inside column forms
     function onCreated(e: Event) {

@@ -8,6 +8,12 @@ const VALID_STAGES: DealStage[] = [
 
 // GET /api/deals — all deals ordered by stage then sort_order
 export async function GET() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json(
+      { error: "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local." },
+      { status: 503 }
+    );
+  }
   try {
     const supabase = createServerClient();
     const { data, error } = await supabase
@@ -29,6 +35,12 @@ export async function GET() {
 
 // POST /api/deals — create a deal
 export async function POST(request: NextRequest) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json(
+      { error: "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local." },
+      { status: 503 }
+    );
+  }
   try {
     const body = await request.json() as Partial<Deal>;
 

@@ -6,11 +6,20 @@ const VALID_STAGES: DealStage[] = [
   "prospecting", "due_diligence", "under_contract", "closed",
 ];
 
+const supabaseConfigured =
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const SUPABASE_NOT_CONFIGURED = NextResponse.json(
+  { error: "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local." },
+  { status: 503 }
+);
+
 // PATCH /api/deals/[id] — update stage (and optionally other fields)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!supabaseConfigured) return SUPABASE_NOT_CONFIGURED;
   try {
     const body = await request.json() as Partial<Deal>;
     const updates: Partial<Deal> = {};
@@ -50,6 +59,7 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!supabaseConfigured) return SUPABASE_NOT_CONFIGURED;
   try {
     const supabase = createServerClient();
     const { error } = await supabase.from("deals").delete().eq("id", params.id);

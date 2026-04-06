@@ -382,7 +382,7 @@ export default function PILOTAnalysisPage() {
 
   // Compute 10-year total public benefit for the header if not parsed directly
   const computedTotalBenefit = metrics
-    ? (metrics.totalPublicBenefit ??
+    ? (metrics.totalPublicBenefit ?? (
         [
           metrics.adjRentBenefit,
           metrics.originationFee,
@@ -392,7 +392,8 @@ export default function PILOTAnalysisPage() {
           metrics.assetComplianceFees,
         ]
           .filter((v): v is number => v !== null)
-          .reduce((sum, v) => sum + v, 0) || null)
+          .reduce((sum, v) => sum + v, 0) || null
+      ))
     : null;
 
   return (

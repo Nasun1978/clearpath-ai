@@ -201,6 +201,17 @@ export default function DashboardPage() {
             </div>
 
             <a
+              href="mailto:steven@ripespotdevelopment.com?subject=RipeSpot%20Question"
+              className="p-2 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors"
+              aria-label="Contact support"
+              title="Contact Support"
+            >
+              <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </a>
+            <a
               href="/submit"
               className="px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-white hover:bg-brand-light transition-colors"
             >
@@ -433,6 +444,23 @@ export default function DashboardPage() {
           </table>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-800/60 mt-8 py-6 px-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <p className="text-xs text-slate-600">© {new Date().getFullYear()} RipeSpot Development</p>
+          <a
+            href="mailto:steven@ripespotdevelopment.com?subject=RipeSpot%20Question"
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            Contact Support
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }

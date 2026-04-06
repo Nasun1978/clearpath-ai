@@ -136,6 +136,9 @@ export default function DashboardPage() {
             <Link href="/dashboard/checklist" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-900/40 text-teal-300 hover:bg-teal-800/50 border border-teal-800/50 transition-colors">
               LIHTC Checklist
             </Link>
+            <Link href="/dashboard/pilot-analysis" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-900/40 text-purple-300 hover:bg-purple-800/50 border border-purple-800/50 transition-colors">
+              PILOT Analysis
+            </Link>
 
             {/* Notification bell */}
             <div ref={bellRef} className="relative">

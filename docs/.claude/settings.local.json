@@ -37,7 +37,9 @@
       "Bash(npm run:*)",
       "Bash(grep -r \"DEMO_MODE\\\\|NEXT_PUBLIC_DEMO\" /Users/stevenkennedy/Downloads/clearpath-ai/.env*)",
       "Bash(ls /Users/stevenkennedy/Downloads/clearpath-ai/.env*)",
-      "Bash(grep -E \"\\\\.sql$\")"
+      "Bash(grep -E \"\\\\.sql$\")",
+      "Bash(python3 -c \":*)",
+      "Bash(pip3 install:*)"
     ]
   }
 }

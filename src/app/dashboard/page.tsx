@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import type { ProposalListItem, DashboardStats } from "@/types";
+import type { ProposalListItem, DashboardStats, ChecklistItem } from "@/types";
 import {
   formatCurrency,
   formatPercent,
@@ -11,23 +11,82 @@ import {
   timeAgo,
 } from "@/lib/utils";
 
+// ── Deadline notification types & helpers ──────────────────────────────────────
+
+interface DeadlineNotif {
+  itemId: string;
+  itemText: string;
+  checklistName: string;
+  due_date: string;
+  urgency: "overdue" | "urgent" | "warning";
+}
+
+function classifyDeadlines(checklists: { project_name: string; checklist_items: ChecklistItem[] }[]): DeadlineNotif[] {
+  const now = new Date();
+  const notifs: DeadlineNotif[] = [];
+  for (const cl of checklists) {
+    for (const item of cl.checklist_items ?? []) {
+      if (!item.due_date || item.checked) continue;
+      const due = new Date(item.due_date + "T23:59:59");
+      const diffMs = due.getTime() - now.getTime();
+      let urgency: DeadlineNotif["urgency"] | null = null;
+      if (diffMs < 0) urgency = "overdue";
+      else if (diffMs < 24 * 60 * 60 * 1000) urgency = "urgent";
+      else if (diffMs < 7 * 24 * 60 * 60 * 1000) urgency = "warning";
+      if (urgency) notifs.push({ itemId: item.id, itemText: item.text, checklistName: cl.project_name || "Untitled", due_date: item.due_date, urgency });
+    }
+  }
+  // Sort: overdue first, then urgent, then warning; within each group by due_date asc
+  const order = { overdue: 0, urgent: 1, warning: 2 };
+  return notifs.sort((a, b) => order[a.urgency] - order[b.urgency] || a.due_date.localeCompare(b.due_date));
+}
+
+function formatNotifDate(dateStr: string): string {
+  const due = new Date(dateStr + "T00:00:00");
+  const now = new Date();
+  const diffMs = new Date(dateStr + "T23:59:59").getTime() - now.getTime();
+  const diffDays = Math.round(Math.abs(diffMs) / (1000 * 60 * 60 * 24));
+  if (diffMs < 0) return diffDays === 1 ? "Yesterday" : `${diffDays}d overdue`;
+  if (diffMs < 24 * 60 * 60 * 1000) return "Today";
+  if (diffDays === 1) return "Tomorrow";
+  return due.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export default function DashboardPage() {
   const [proposals, setProposals] = useState<ProposalListItem[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const [deadlines, setDeadlines] = useState<DeadlineNotif[]>([]);
+  const [bellOpen, setBellOpen] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
+
+  // Close bell dropdown when clicking outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   useEffect(() => {
     async function load() {
       try {
-        const [proposalsRes, statsRes] = await Promise.all([
+        const [proposalsRes, statsRes, checklistRes] = await Promise.all([
           fetch("/api/proposals" + (statusFilter !== "all" ? `?status=${statusFilter}` : "")),
           fetch("/api/dashboard-stats"),
+          fetch("/api/checklist"),
         ]);
         const proposalsData = await proposalsRes.json();
         const statsData = await statsRes.json();
         setProposals(proposalsData.proposals || []);
         setStats(statsData);
+
+        if (checklistRes.ok) {
+          const checklistData = await checklistRes.json() as { checklists?: { project_name: string; checklist_items: ChecklistItem[] }[] };
+          setDeadlines(classifyDeadlines(checklistData.checklists ?? []));
+        }
       } catch (error) {
         console.error("Failed to load dashboard:", error);
       } finally {
@@ -77,6 +136,67 @@ export default function DashboardPage() {
             <Link href="/dashboard/checklist" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-900/40 text-teal-300 hover:bg-teal-800/50 border border-teal-800/50 transition-colors">
               LIHTC Checklist
             </Link>
+
+            {/* Notification bell */}
+            <div ref={bellRef} className="relative">
+              <button
+                onClick={() => setBellOpen((o) => !o)}
+                className="relative p-2 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors"
+                aria-label="Deadline notifications"
+              >
+                <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {(deadlines.filter((d) => d.urgency === "overdue" || d.urgency === "urgent").length > 0) && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold px-0.5">
+                    {deadlines.filter((d) => d.urgency === "overdue" || d.urgency === "urgent").length}
+                  </span>
+                )}
+              </button>
+
+              {/* Bell dropdown */}
+              {bellOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 bg-[#0F1729] border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">Deadline Alerts</span>
+                    <Link href="/dashboard/checklist" onClick={() => setBellOpen(false)} className="text-xs text-teal-400 hover:text-teal-300">
+                      View checklist →
+                    </Link>
+                  </div>
+                  {deadlines.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-xs text-slate-500">No upcoming deadlines</div>
+                  ) : (
+                    <div className="max-h-72 overflow-y-auto divide-y divide-slate-800/60">
+                      {deadlines.slice(0, 8).map((n) => (
+                        <div key={n.itemId} className="px-4 py-3 flex items-start gap-3">
+                          <span className={`mt-0.5 shrink-0 w-1.5 h-1.5 rounded-full ${
+                            n.urgency === "overdue" ? "bg-red-500" :
+                            n.urgency === "urgent" ? "bg-red-400" : "bg-amber-400"
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-slate-300 leading-snug truncate">{n.itemText}</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5">{n.checklistName}</p>
+                          </div>
+                          <span className={`shrink-0 text-[10px] font-semibold ${
+                            n.urgency === "overdue" ? "text-red-400" :
+                            n.urgency === "urgent" ? "text-red-400" : "text-amber-400"
+                          }`}>
+                            {formatNotifDate(n.due_date)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {deadlines.length > 8 && (
+                    <div className="px-4 py-2 border-t border-slate-800 text-center text-xs text-slate-500">
+                      +{deadlines.length - 8} more — <Link href="/dashboard/checklist" onClick={() => setBellOpen(false)} className="text-teal-400 hover:text-teal-300">view all</Link>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <a
               href="/submit"
               className="px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-white hover:bg-brand-light transition-colors"
@@ -108,6 +228,71 @@ export default function DashboardPage() {
                 <div className="text-sm text-slate-400 mt-1">{s.label}</div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Deadline Notifications Widget */}
+        {deadlines.length > 0 && (
+          <div className="mb-8 bg-[#0F1729] border border-slate-800 rounded-xl overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">LIHTC Checklist Deadlines</span>
+                <span className="text-xs text-slate-500">
+                  {deadlines.filter((d) => d.urgency === "overdue").length > 0 && (
+                    <span className="ml-2 px-1.5 py-0.5 rounded bg-red-900/40 text-red-400 border border-red-700/30">
+                      {deadlines.filter((d) => d.urgency === "overdue").length} overdue
+                    </span>
+                  )}
+                  {deadlines.filter((d) => d.urgency === "urgent").length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 rounded bg-red-900/30 text-red-400 border border-red-700/20">
+                      {deadlines.filter((d) => d.urgency === "urgent").length} due today
+                    </span>
+                  )}
+                  {deadlines.filter((d) => d.urgency === "warning").length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400 border border-amber-700/20">
+                      {deadlines.filter((d) => d.urgency === "warning").length} this week
+                    </span>
+                  )}
+                </span>
+              </div>
+              <Link href="/dashboard/checklist" className="text-xs text-teal-400 hover:text-teal-300 transition-colors">
+                Open checklist →
+              </Link>
+            </div>
+            <div className="divide-y divide-slate-800/50">
+              {deadlines.map((n) => (
+                <div key={n.itemId} className={`px-5 py-3 flex items-center gap-4 ${
+                  n.urgency === "overdue" ? "bg-red-950/10" :
+                  n.urgency === "urgent" ? "bg-red-950/10" : "bg-amber-950/10"
+                }`}>
+                  {/* Urgency indicator */}
+                  <div className={`shrink-0 w-1 self-stretch rounded-full ${
+                    n.urgency === "overdue" ? "bg-red-500" :
+                    n.urgency === "urgent" ? "bg-red-400" : "bg-amber-400"
+                  }`} />
+                  {/* Item text */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-200 truncate">{n.itemText}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{n.checklistName}</p>
+                  </div>
+                  {/* Due date label */}
+                  <span className={`shrink-0 text-xs font-semibold px-2 py-1 rounded border ${
+                    n.urgency === "overdue"
+                      ? "bg-red-900/30 text-red-400 border-red-700/30"
+                      : n.urgency === "urgent"
+                      ? "bg-red-900/20 text-red-400 border-red-700/20"
+                      : "bg-amber-900/20 text-amber-400 border-amber-700/20"
+                  }`}>
+                    {n.urgency === "overdue" ? "⚠ " : n.urgency === "urgent" ? "⚡ " : ""}
+                    {formatNotifDate(n.due_date)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

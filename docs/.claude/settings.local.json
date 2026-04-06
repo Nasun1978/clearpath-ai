@@ -36,7 +36,8 @@
       "Bash(node -e \":*)",
       "Bash(npm run:*)",
       "Bash(grep -r \"DEMO_MODE\\\\|NEXT_PUBLIC_DEMO\" /Users/stevenkennedy/Downloads/clearpath-ai/.env*)",
-      "Bash(ls /Users/stevenkennedy/Downloads/clearpath-ai/.env*)"
+      "Bash(ls /Users/stevenkennedy/Downloads/clearpath-ai/.env*)",
+      "Bash(grep -E \"\\\\.sql$\")"
     ]
   }
 }

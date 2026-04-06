@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from("lihtc_checklist")
-      .select("id, project_name, developer, location_parish, total_units, project_type, date_prepared, created_at, updated_at")
+      .select("id, project_name, developer, location_parish, total_units, project_type, date_prepared, checklist_items, created_at, updated_at")
       .order("updated_at", { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

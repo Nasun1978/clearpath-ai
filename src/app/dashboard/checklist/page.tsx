@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { CHECKLIST_SECTIONS, buildDefaultItems, getItemGuidance } from "./data";
+import { CHECKLIST_SECTIONS, buildDefaultItems, getItemGuidance, LHC_SUGGESTED_DEADLINES } from "./data";
 import type { ChecklistItemState } from "./data";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -49,6 +49,38 @@ function overallProgress(items: ChecklistItemState[]) {
   return { checked, total: items.length };
 }
 
+// ── Deadline helpers ───────────────────────────────────────────────────────────
+
+type DeadlineUrgency = "overdue" | "urgent" | "warning" | "normal";
+
+function getDeadlineUrgency(due_date: string | null | undefined): DeadlineUrgency | null {
+  if (!due_date) return null;
+  const now = new Date();
+  const due = new Date(due_date + "T23:59:59");
+  const diffMs = due.getTime() - now.getTime();
+  if (diffMs < 0) return "overdue";
+  if (diffMs < 24 * 60 * 60 * 1000) return "urgent";
+  if (diffMs < 7 * 24 * 60 * 60 * 1000) return "warning";
+  return "normal";
+}
+
+function getDueLabel(due_date: string): string {
+  const now = new Date();
+  const due = new Date(due_date + "T23:59:59");
+  const diffMs = due.getTime() - now.getTime();
+  const diffDays = Math.round(Math.abs(diffMs) / (1000 * 60 * 60 * 24));
+  if (diffMs < 0) return diffDays === 1 ? "Overdue by 1 day" : `Overdue by ${diffDays} days`;
+  if (diffMs < 24 * 60 * 60 * 1000) return "Due today";
+  if (diffDays === 1) return "Due tomorrow";
+  return `Due in ${diffDays} days`;
+}
+
+function formatDueDate(dateStr: string): string {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+  });
+}
+
 // ── Item row ──────────────────────────────────────────────────────────────────
 
 interface ItemRowProps {
@@ -62,12 +94,23 @@ function ItemRow({ item, onChange, onUpload, uploading }: ItemRowProps) {
   const [notesOpen, setNotesOpen] = useState(false);
   const guidance = getItemGuidance(item.id);
   const fileRef = useRef<HTMLInputElement>(null);
+  const urgency = getDeadlineUrgency(item.due_date);
+
+  const urgencyBadgeClass =
+    urgency === "overdue" ? "bg-red-900/30 text-red-400 border-red-700/30" :
+    urgency === "urgent"  ? "bg-red-900/30 text-red-400 border-red-700/30" :
+    urgency === "warning" ? "bg-amber-900/30 text-amber-400 border-amber-700/30" :
+    "bg-slate-800/60 text-slate-500 border-slate-700/30";
 
   return (
     <div
       className={`rounded-xl border transition-colors ${
         item.checked
           ? "bg-emerald-950/20 border-emerald-800/30"
+          : urgency === "overdue" || urgency === "urgent"
+          ? "bg-red-950/10 border-red-900/30"
+          : urgency === "warning"
+          ? "bg-amber-950/10 border-amber-900/30"
           : "bg-slate-900/40 border-slate-800/60"
       } p-4`}
     >
@@ -90,9 +133,17 @@ function ItemRow({ item, onChange, onUpload, uploading }: ItemRowProps) {
         </button>
 
         <div className="flex-1 min-w-0">
-          <p className={`text-sm leading-snug ${item.checked ? "text-slate-400 line-through" : "text-slate-200"}`}>
-            {item.text}
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <p className={`text-sm leading-snug ${item.checked ? "text-slate-400 line-through" : "text-slate-200"}`}>
+              {item.text}
+            </p>
+            {/* Deadline badge */}
+            {item.due_date && (
+              <span className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${urgencyBadgeClass}`}>
+                {urgency === "overdue" ? "⚠ " : urgency === "urgent" ? "⚡ " : ""}{getDueLabel(item.due_date)}
+              </span>
+            )}
+          </div>
 
           {guidance && (
             <p className="text-xs text-slate-500 mt-1 italic">{guidance}</p>
@@ -106,6 +157,31 @@ function ItemRow({ item, onChange, onUpload, uploading }: ItemRowProps) {
             >
               {notesOpen ? "Hide notes" : item.notes ? "Edit notes ✎" : "+ Add notes"}
             </button>
+
+            {/* Date picker */}
+            <label className="flex items-center gap-1 cursor-pointer text-xs text-slate-500 hover:text-slate-300 transition-colors">
+              <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {item.due_date ? formatDueDate(item.due_date) : "Set deadline"}
+              <input
+                type="date"
+                value={item.due_date ?? ""}
+                onChange={(e) => onChange(item.id, "due_date", e.target.value || null)}
+                className="absolute opacity-0 w-0 h-0"
+                tabIndex={-1}
+              />
+            </label>
+            {item.due_date && (
+              <button
+                onClick={() => onChange(item.id, "due_date", null)}
+                className="text-xs text-slate-600 hover:text-red-400 transition-colors"
+                aria-label="Clear deadline"
+              >
+                ×
+              </button>
+            )}
 
             {item.uploaded_file_url ? (
               <a
@@ -282,10 +358,16 @@ export default function ChecklistPage() {
           if (saved) {
             const parsed = JSON.parse(saved) as { projectInfo: ProjectInfo; items: ChecklistItemState[] };
             setProjectInfo(parsed.projectInfo ?? EMPTY_PROJECT);
-            // Merge saved state onto default items (preserves any new items added in updates)
+            // Merge saved state onto default items (preserves any new items added in updates).
+            // If a saved item pre-dates the due_date feature (due_date === undefined),
+            // inherit the suggested deadline from the defaults so it auto-populates.
             const defaults = buildDefaultItems();
             const savedMap = new Map((parsed.items ?? []).map((i) => [i.id, i]));
-            setItems(defaults.map((d) => savedMap.get(d.id) ?? d));
+            setItems(defaults.map((d) => {
+              const saved = savedMap.get(d.id);
+              if (!saved) return d;
+              return saved.due_date === undefined ? { ...saved, due_date: d.due_date } : saved;
+            }));
           }
           setInitializing(false);
           return;
@@ -318,10 +400,14 @@ export default function ChecklistPage() {
               project_type: c.project_type,
               date_prepared: c.date_prepared,
             });
-            // Merge saved items
+            // Merge saved items; back-fill due_date for pre-feature records.
             const defaults = buildDefaultItems();
             const savedMap = new Map((c.checklist_items ?? []).map((i) => [i.id, i]));
-            setItems(defaults.map((d) => savedMap.get(d.id) ?? d));
+            setItems(defaults.map((d) => {
+              const saved = savedMap.get(d.id);
+              if (!saved) return d;
+              return saved.due_date === undefined ? { ...saved, due_date: d.due_date } : saved;
+            }));
           }
         }
       } catch {

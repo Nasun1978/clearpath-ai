@@ -575,7 +575,68 @@ export interface ChecklistItemState {
   notes: string;
   uploaded_file_url: string | null;
   uploaded_file_name: string | null;
+  due_date: string | null;
 }
+
+// ── LHC 2025 QAP Suggested Deadlines ─────────────────────────────────────────
+// Keyed by item ID. Dates sourced from the LHC 2025 QAP timeline:
+//   Application deadline:  March 28, 2025
+//   Carryover allocation:  December 31, 2025
+//   10% cost test:         December 31, 2026
+//   Annual monitoring fee: January 1 (recurring)
+//   Annual Owner Cert:     March 1 (recurring)
+export const LHC_SUGGESTED_DEADLINES: Record<string, string> = {
+  // Section 1 — Application Submission (all items due at application deadline)
+  s1_1: "2025-03-28",
+  s1_2: "2025-03-28",
+  s1_3: "2025-03-28",
+  s1_4: "2025-03-28",
+  s1_5: "2025-03-28",
+  s1_6: "2025-03-28",
+  s1_7: "2025-03-28",
+
+  // Section 2 — Community Notification (must precede application deadline)
+  s2_1: "2025-02-26", // public notice: ≥30 days before March 28 deadline
+  s2_2: "2025-03-28", // proof of publication due with application
+  s2_3: "2025-03-14", // certified mail: allow 14 days for USPS delivery
+  s2_4: "2025-03-14",
+  s2_5: "2025-03-14",
+  s2_6: "2025-03-21", // hearing: complete 1 week before application deadline
+  s2_7: "2025-03-28",
+
+  // Section 3 — Threshold items with currency requirements
+  s3_5: "2025-03-28", // site control: must be in place at application
+  s3_8: "2025-03-28", // Phase I ESA: must be dated within 12 months of deadline
+
+  // Section 4 — Acquisition/Rehab thresholds with date requirements
+  s4_4: "2025-03-28", // appraisal: within 6 months of application deadline
+
+  // Section 5 — Team documents with 90-day currency window
+  s5_3: "2025-01-17", // good standing cert: must be dated within 90 days of March 28
+
+  // Section 6 — Financial commitments required at application
+  s6_9:  "2025-03-28", // firm debt commitment letters
+  s6_10: "2025-03-28", // equity commitment letter
+  s6_11: "2025-03-28", // market study: within 6 months of application deadline
+
+  // Section 7 — Bond requirements (4% projects)
+  s7_1: "2025-02-28", // TEFRA notice: ≥14 days before the hearing date
+  s7_6: "2025-03-28", // PAB volume cap reservation
+
+  // Section 8 — Post-award milestones
+  s8_1:  "2025-12-31", // carryover allocation: IRC §42(h)(1)(E) hard deadline
+  s8_2:  "2026-12-31", // 10% cost incurred test: 12 months after carryover
+  s8_3:  "2026-06-30", // tenant selection plan: before marketing / lease-up
+  s8_10: "2025-12-31", // construction commencement: per LHC award letter
+
+  // Section 9 — Placed-in-service (estimated timeline)
+  s9_1: "2028-06-30", // cost certification: within 6 months of final PIS
+
+  // Section 11 — Ongoing annual compliance deadlines
+  s11_1: "2026-01-01", // annual monitoring fee: due January 1 each year
+  s11_4: "2026-03-01", // annual owner certification: due March 1 each year
+  s11_10: "2026-04-30", // audited financials: 120 days after December 31 year-end
+};
 
 export function buildDefaultItems(): ChecklistItemState[] {
   return CHECKLIST_SECTIONS.flatMap((section) =>
@@ -587,6 +648,7 @@ export function buildDefaultItems(): ChecklistItemState[] {
       notes: "",
       uploaded_file_url: null,
       uploaded_file_name: null,
+      due_date: LHC_SUGGESTED_DEADLINES[item.id] ?? null,
     }))
   );
 }

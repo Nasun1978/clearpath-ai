@@ -413,6 +413,7 @@ export interface ChecklistItem {
   notes: string;
   uploaded_file_url: string | null;
   uploaded_file_name: string | null;
+  due_date: string | null;
 }
 
 export type ChecklistProjectType =

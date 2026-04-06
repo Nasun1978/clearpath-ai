@@ -1,11 +1,10 @@
 // @ts-nocheck
-// @ts-nocheck
 // ============================================================================
 // /api/proposals — CRUD operations for proposals
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerClient } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/supabase";
 import { DEMO_PROPOSALS } from "@/lib/demo-data";
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
@@ -22,7 +21,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = getServerClient();
+    const { user, supabase } = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { searchParams } = new URL(request.url);
 
     const status = searchParams.get("status");
@@ -73,7 +73,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const supabase = getServerClient();
+    const { user, supabase } = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const body = await request.json();
 
     const required = ["project_name", "developer_entity", "credit_type"];

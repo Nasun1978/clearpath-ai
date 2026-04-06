@@ -34,7 +34,9 @@
       "Bash(node_modules/.bin/tsc --noEmit)",
       "Bash(node /Users/stevenkennedy/Downloads/clearpath-ai/node_modules/.bin/tsc --noEmit --project /Users/stevenkennedy/Downloads/clearpath-ai/tsconfig.json)",
       "Bash(node -e \":*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(grep -r \"DEMO_MODE\\\\|NEXT_PUBLIC_DEMO\" /Users/stevenkennedy/Downloads/clearpath-ai/.env*)",
+      "Bash(ls /Users/stevenkennedy/Downloads/clearpath-ai/.env*)"
     ]
   }
 }

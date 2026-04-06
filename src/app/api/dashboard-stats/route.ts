@@ -1,11 +1,10 @@
 // @ts-nocheck
-// @ts-nocheck
 // ============================================================================
 // GET /api/dashboard-stats — Dashboard summary statistics
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerClient } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/supabase";
 import { DEMO_STATS } from "@/lib/demo-data";
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
@@ -16,7 +15,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = getServerClient();
+    const { user, supabase } = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { searchParams } = new URL(request.url);
     const agencyId = searchParams.get("agency_id");
 

@@ -118,6 +118,9 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
+            <Link href="/dashboard/about" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
+              About
+            </Link>
             <Link href="/dashboard/deals" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
               Deal Pipeline
             </Link>

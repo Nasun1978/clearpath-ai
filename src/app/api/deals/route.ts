@@ -1,21 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/supabase";
 import type { Deal, DealStage } from "@/types";
 
 const VALID_STAGES: DealStage[] = [
   "prospecting", "due_diligence", "under_contract", "closed",
 ];
 
-// GET /api/deals — all deals ordered by stage then sort_order
-export async function GET() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+const supabaseConfigured =
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// GET /api/deals — all deals for the authenticated user
+export async function GET(request: NextRequest) {
+  if (!supabaseConfigured) {
     return NextResponse.json(
-      { error: "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local." },
+      { error: "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local." },
       { status: 503 }
     );
   }
   try {
-    const supabase = createServerClient();
+    const { user, supabase } = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { data, error } = await supabase
       .from("deals")
       .select("*")
@@ -23,7 +28,6 @@ export async function GET() {
       .order("created_at", { ascending: true });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
     return NextResponse.json({ deals: data as Deal[] });
   } catch (error) {
     return NextResponse.json(
@@ -33,15 +37,18 @@ export async function GET() {
   }
 }
 
-// POST /api/deals — create a deal
+// POST /api/deals — create a deal (user_id auto-set by DB trigger)
 export async function POST(request: NextRequest) {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!supabaseConfigured) {
     return NextResponse.json(
-      { error: "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local." },
+      { error: "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local." },
       { status: 503 }
     );
   }
   try {
+    const { user, supabase } = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const body = await request.json() as Partial<Deal>;
 
     if (!body.address?.trim()) {
@@ -51,7 +58,6 @@ export async function POST(request: NextRequest) {
       ? (body.stage as DealStage)
       : "prospecting";
 
-    const supabase = createServerClient();
     const { data, error } = await supabase
       .from("deals")
       .insert({
@@ -61,12 +67,12 @@ export async function POST(request: NextRequest) {
         stage,
         notes: body.notes?.trim() || null,
         sort_order: 0,
+        user_id: user.id,  // belt-and-suspenders alongside DB trigger
       })
       .select()
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
     return NextResponse.json({ deal: data as Deal }, { status: 201 });
   } catch (error) {
     return NextResponse.json(

@@ -33,7 +33,8 @@
       "Bash(npx tsc:*)",
       "Bash(node_modules/.bin/tsc --noEmit)",
       "Bash(node /Users/stevenkennedy/Downloads/clearpath-ai/node_modules/.bin/tsc --noEmit --project /Users/stevenkennedy/Downloads/clearpath-ai/tsconfig.json)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(npm run:*)"
     ]
   }
 }

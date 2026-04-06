@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/supabase";
 import type { Deal, DealStage } from "@/types";
 
 const VALID_STAGES: DealStage[] = [
@@ -7,20 +7,23 @@ const VALID_STAGES: DealStage[] = [
 ];
 
 const supabaseConfigured =
-  !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const SUPABASE_NOT_CONFIGURED = NextResponse.json(
-  { error: "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local." },
+const NOT_CONFIGURED = NextResponse.json(
+  { error: "Supabase is not configured." },
   { status: 503 }
 );
 
-// PATCH /api/deals/[id] — update stage (and optionally other fields)
+// PATCH /api/deals/[id]
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  if (!supabaseConfigured) return SUPABASE_NOT_CONFIGURED;
+  if (!supabaseConfigured) return NOT_CONFIGURED;
   try {
+    const { user, supabase } = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const body = await request.json() as Partial<Deal>;
     const updates: Partial<Deal> = {};
 
@@ -35,7 +38,7 @@ export async function PATCH(
     if (body.notes !== undefined) updates.notes = body.notes;
     if (body.sort_order !== undefined) updates.sort_order = body.sort_order;
 
-    const supabase = createServerClient();
+    // RLS ensures the user can only update their own rows
     const { data, error } = await supabase
       .from("deals")
       .update(updates)
@@ -44,7 +47,6 @@ export async function PATCH(
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
     return NextResponse.json({ deal: data as Deal });
   } catch (error) {
     return NextResponse.json(
@@ -56,12 +58,15 @@ export async function PATCH(
 
 // DELETE /api/deals/[id]
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  if (!supabaseConfigured) return SUPABASE_NOT_CONFIGURED;
+  if (!supabaseConfigured) return NOT_CONFIGURED;
   try {
-    const supabase = createServerClient();
+    const { user, supabase } = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // RLS ensures only the owner can delete
     const { error } = await supabase.from("deals").delete().eq("id", params.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return new NextResponse(null, { status: 204 });

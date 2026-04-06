@@ -38,16 +38,16 @@ ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "projects_select" ON projects;
 CREATE POLICY "projects_select" ON projects
-  FOR SELECT USING (user_id = auth.uid() OR user_id IS NULL);
+  FOR SELECT USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "projects_insert" ON projects;
 CREATE POLICY "projects_insert" ON projects
-  FOR INSERT WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "projects_update" ON projects;
 CREATE POLICY "projects_update" ON projects
-  FOR UPDATE USING (user_id = auth.uid() OR user_id IS NULL);
+  FOR UPDATE USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "projects_delete" ON projects;
 CREATE POLICY "projects_delete" ON projects
-  FOR DELETE USING (user_id = auth.uid() OR user_id IS NULL);
+  FOR DELETE USING (auth.uid() = user_id);

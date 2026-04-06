@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/supabase";
 import type { Project, ProjectType } from "@/types";
 
 const VALID_TYPES: ProjectType[] = [
   "lihtc_9pct", "lihtc_4pct", "home", "htf", "cdbg", "mixed_use", "market_rate", "other",
 ];
 
-// GET /api/projects — list all projects ordered by newest first
-export async function GET() {
+// GET /api/projects — list projects for the authenticated user
+export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient();
+    const { user, supabase } = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { data, error } = await supabase
       .from("projects")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
     return NextResponse.json({ projects: data as Project[] });
   } catch (error) {
     return NextResponse.json(
@@ -26,9 +27,12 @@ export async function GET() {
   }
 }
 
-// POST /api/projects — create a project
+// POST /api/projects — create a project (user_id auto-set by DB trigger)
 export async function POST(request: NextRequest) {
   try {
+    const { user, supabase } = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const body = await request.json() as Partial<Project>;
 
     if (!body.name?.trim()) {
@@ -38,7 +42,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "valid type is required" }, { status: 400 });
     }
 
-    const supabase = createServerClient();
     const { data, error } = await supabase
       .from("projects")
       .insert({
@@ -48,12 +51,12 @@ export async function POST(request: NextRequest) {
         budget: body.budget ?? null,
         timeline: body.timeline?.trim() || null,
         notes: body.notes?.trim() || null,
+        user_id: user.id,  // belt-and-suspenders alongside DB trigger
       })
       .select()
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
     return NextResponse.json({ project: data as Project }, { status: 201 });
   } catch (error) {
     return NextResponse.json(

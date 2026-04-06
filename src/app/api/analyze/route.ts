@@ -10,7 +10,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerClient } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/supabase";
 import { analyzeProposal } from "@/lib/claude";
 import { DEMO_PROPOSALS, DEMO_COMPLIANCE_CHECKS, DEMO_QAP_SCORES } from "@/lib/demo-data";
 import type { Proposal } from "@/types";
@@ -44,6 +44,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const { user, supabase } = await getUserFromRequest(request);
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { proposal_id, model } = body;
 
@@ -54,10 +60,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = getServerClient();
-
     // 1. Fetch the proposal
-    const { data: proposal, error: fetchError } = await supabase!
+    const { data: proposal, error: fetchError } = await supabase
       .from("proposals")
       .select("*")
       .eq("id", proposal_id)
@@ -71,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Update status to processing
-    await supabase!
+    await supabase
       .from("proposals")
       .update({ status: "processing" })
       .eq("id", proposal_id);
@@ -83,7 +87,7 @@ export async function POST(request: NextRequest) {
     );
 
     // 4. Store compliance check results using the database function
-    const { error: complianceError } = await supabase!.rpc(
+    const { error: complianceError } = await supabase.rpc(
       "record_compliance_results",
       {
         p_proposal_id: proposal_id,
@@ -95,7 +99,7 @@ export async function POST(request: NextRequest) {
     if (complianceError) {
       console.error("Failed to store compliance results:", complianceError);
       for (const check of analysisResult.compliance_checks) {
-        await supabase!.from("compliance_checks").insert({
+        await supabase.from("compliance_checks").insert({
           proposal_id,
           check_name: check.check_name,
           category: check.category,
@@ -112,7 +116,7 @@ export async function POST(request: NextRequest) {
 
     // 5. Store QAP scoring results if available
     if (analysisResult.qap_scores.length > 0 && proposal.qap_state) {
-      const { error: qapError } = await supabase!.rpc("record_qap_results", {
+      const { error: qapError } = await supabase.rpc("record_qap_results", {
         p_proposal_id: proposal_id,
         p_qap_state: proposal.qap_state,
         p_qap_year: proposal.qap_year || new Date().getFullYear(),
@@ -122,7 +126,7 @@ export async function POST(request: NextRequest) {
       if (qapError) {
         console.error("Failed to store QAP results:", qapError);
         for (const score of analysisResult.qap_scores) {
-          await supabase!.from("qap_scoring").insert({
+          await supabase.from("qap_scoring").insert({
             proposal_id,
             qap_state: proposal.qap_state,
             qap_year: proposal.qap_year || new Date().getFullYear(),
@@ -138,7 +142,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Update proposal with AI analysis metadata
-    await supabase!
+    await supabase
       .from("proposals")
       .update({
         ai_analysis_completed: true,
@@ -150,7 +154,7 @@ export async function POST(request: NextRequest) {
       .eq("id", proposal_id);
 
     // 7. Log the activity
-    await supabase!.from("activity_log").insert({
+    await supabase.from("activity_log").insert({
       proposal_id,
       action: "ai_analysis_completed",
       action_detail: `AI compliance analysis completed: ${analysisResult.compliance_checks.length} checks, ${analysisResult.qap_scores.length} QAP categories`,

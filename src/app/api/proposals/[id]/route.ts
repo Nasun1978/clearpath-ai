@@ -3,7 +3,7 @@
 // PATCH /api/proposals/[id] — Update a proposal
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerClient } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/supabase";
 import { DEMO_PROPOSALS, DEMO_COMPLIANCE_CHECKS, DEMO_QAP_SCORES } from "@/lib/demo-data";
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
@@ -28,7 +28,12 @@ export async function GET(
   }
 
   try {
-    const supabase = getServerClient();
+    const { user, supabase } = await getUserFromRequest(request);
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const proposalId = params.id;
 
     const { data: proposal, error } = await supabase
@@ -101,7 +106,12 @@ export async function PATCH(
   }
 
   try {
-    const supabase = getServerClient();
+    const { user, supabase } = await getUserFromRequest(request);
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
 
     const { data, error } = await supabase

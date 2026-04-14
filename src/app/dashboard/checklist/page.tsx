@@ -89,12 +89,14 @@ interface ItemRowProps {
   onChange: (id: string, field: keyof ChecklistItemState, value: unknown) => void;
   onUpload: (id: string, file: File) => void;
   uploading: boolean;
+  uploadError?: string;
   teamMembers: TeamMember[];
   onAssign: (itemId: string, email: string | null) => void;
 }
 
-function ItemRow({ item, onChange, onUpload, uploading, teamMembers, onAssign }: ItemRowProps) {
+function ItemRow({ item, onChange, onUpload, uploading, uploadError, teamMembers, onAssign }: ItemRowProps) {
   const [notesOpen, setNotesOpen] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const guidance = getItemGuidance(item.id);
   const fileRef = useRef<HTMLInputElement>(null);
   const urgency = getDeadlineUrgency(item.due_date);
@@ -213,44 +215,6 @@ function ItemRow({ item, onChange, onUpload, uploading, teamMembers, onAssign }:
               </div>
             )}
 
-            {item.uploaded_file_url ? (
-              <a
-                href={item.uploaded_file_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1 transition-colors"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                </svg>
-                {item.uploaded_file_name ?? "View file"}
-              </a>
-            ) : null}
-
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1 disabled:opacity-50"
-            >
-              {uploading ? (
-                "Uploading…"
-              ) : (
-                <>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
-                  {item.uploaded_file_url ? "Replace file" : "Upload doc"}
-                </>
-              )}
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              className="hidden"
-              onChange={(e) => { if (e.target.files?.[0]) onUpload(item.id, e.target.files[0]); }}
-            />
           </div>
 
           {/* Notes textarea */}
@@ -263,6 +227,85 @@ function ItemRow({ item, onChange, onUpload, uploading, teamMembers, onAssign }:
               className="mt-2 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500 resize-none"
             />
           )}
+
+          {/* Document upload zone */}
+          <div className="mt-3">
+            {item.uploaded_file_url ? (
+              /* File already attached — show it with a replace option */
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-teal-950/30 border border-teal-800/40">
+                <svg className="w-3.5 h-3.5 text-teal-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+                <a
+                  href={item.uploaded_file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 text-xs text-teal-300 hover:text-teal-200 truncate transition-colors font-medium"
+                >
+                  {item.uploaded_file_name ?? "View uploaded file"}
+                </a>
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="shrink-0 text-[10px] text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-40"
+                >
+                  {uploading ? "Uploading…" : "Replace"}
+                </button>
+              </div>
+            ) : (
+              /* Drop zone */
+              <div
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border border-dashed cursor-pointer transition-colors ${
+                  dragOver
+                    ? "border-teal-500 bg-teal-950/30"
+                    : uploading
+                    ? "border-slate-700 bg-slate-900/30 opacity-60 cursor-not-allowed"
+                    : "border-slate-700 hover:border-teal-700/60 hover:bg-teal-950/10"
+                }`}
+                onClick={() => !uploading && fileRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); if (!uploading) setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  const f = e.dataTransfer.files[0];
+                  if (f && !uploading) onUpload(item.id, f);
+                }}
+              >
+                {uploading ? (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-teal-400 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    <span className="text-xs text-slate-400">Uploading…</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span className="text-xs text-slate-500">
+                      Drop document here or <span className="text-teal-400">browse</span>
+                      <span className="text-slate-600 ml-1">— PDF, Word, Excel, image</span>
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+            {uploadError && (
+              <p className="mt-1 text-[11px] text-red-400">{uploadError}</p>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.txt,.csv,.zip"
+              onChange={(e) => { if (e.target.files?.[0]) onUpload(item.id, e.target.files[0]); }}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -281,13 +324,14 @@ interface SectionProps {
   onItemChange: (id: string, field: keyof ChecklistItemState, value: unknown) => void;
   onUpload: (id: string, file: File) => void;
   uploadingItems: Record<string, boolean>;
+  uploadErrors: Record<string, string>;
   teamMembers: TeamMember[];
   onAssign: (itemId: string, email: string | null) => void;
 }
 
 function ChecklistSection({
   sectionNum, title, description, items, expanded, onToggle,
-  onItemChange, onUpload, uploadingItems, teamMembers, onAssign,
+  onItemChange, onUpload, uploadingItems, uploadErrors, teamMembers, onAssign,
 }: SectionProps) {
   const { checked, total } = sectionProgress(items, sectionNum);
   const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
@@ -355,6 +399,7 @@ function ChecklistSection({
                   onChange={onItemChange}
                   onUpload={onUpload}
                   uploading={!!uploadingItems[item.id]}
+                  uploadError={uploadErrors[item.id]}
                   teamMembers={teamMembers}
                   onAssign={onAssign}
                 />
@@ -860,6 +905,7 @@ export default function ChecklistPage() {
               onItemChange={handleItemChange}
               onUpload={handleUpload}
               uploadingItems={uploadingItems}
+              uploadErrors={uploadErrors}
               teamMembers={teamMembers}
               onAssign={handleAssign}
             />

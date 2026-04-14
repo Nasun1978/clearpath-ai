@@ -10,11 +10,11 @@ interface PILOTMetrics {
   projectName:   string | null;
   projectLocation: string | null;
 
-  // HHA Benefits Analysis — 10-year totals
+  // Agency Benefits Analysis — 10-year totals
   adjRentBenefit:         number | null;  // rent discount vs market
-  originationFee:         number | null;  // HHA origination fee (yr 1)
+  originationFee:         number | null;  // Agency origination fee (yr 1)
   pilotPayments:          number | null;  // 10-yr PILOT total
-  capitalEventsShare:     number | null;  // backend equity share to HHA
+  capitalEventsShare:     number | null;  // backend equity share to Agency
   annualComplianceFees:   number | null;  // asset/compliance fee 10-yr
   totalDirectBenefits:    number | null;  // subtotal of direct items
   totalPublicBenefit:     number | null;  // incl affordability savings
@@ -108,66 +108,66 @@ function parse(wb: XLSX.WorkBook): PILOTMetrics {
     dscr: null, pilotByYear: [],
   };
 
-  // ── HHA Benefits Analysis ─────────────────────────────────────────────────
+  // ── Agency Benefits Analysis ──────────────────────────────────────────────
   // Layout (col letters → 0-based index):
   //   A(0) = label  C(2) = rate/yr1  D(3) = description  F(5) = item total
   //   G(6) = /unit  H(7) = %age      I(8) = summary totals
-  const hha = readSheet(wb, ["HHA Benefits Analysis", "Municipality Benefits Analysis"]);
-  if (hha) {
+  const agencySheet = readSheet(wb, ["HHA Benefits Analysis", "Agency Benefits Analysis", "Municipality Benefits Analysis"]);
+  if (agencySheet) {
     // Project metadata (rows 0–2)
-    const nameStr = hha[0]?.find((c) => typeof c === "string" && c.trim().length > 2);
+    const nameStr = agencySheet[0]?.find((c) => typeof c === "string" && c.trim().length > 2);
     if (typeof nameStr === "string") m.projectName = nameStr.trim();
-    const locStr  = hha[1]?.find((c) => typeof c === "string" && c.trim().length > 2);
+    const locStr  = agencySheet[1]?.find((c) => typeof c === "string" && c.trim().length > 2);
     if (typeof locStr  === "string") m.projectLocation = locStr.trim();
 
     // Adj Rent — col I (idx 8) holds the 10-yr summary
-    const adjRentRi = findRow(hha, "adj rent");
-    if (adjRentRi >= 0) m.adjRentBenefit = col(hha[adjRentRi], 8) ?? maxNum(hha[adjRentRi], 1000);
+    const adjRentRi = findRow(agencySheet, "adj rent");
+    if (adjRentRi >= 0) m.adjRentBenefit = col(agencySheet[adjRentRi], 8) ?? maxNum(agencySheet[adjRentRi], 1000);
 
     // Origination Fee — col F (idx 5)
-    const origRi = findRow(hha, "origination fee");
-    if (origRi >= 0) m.originationFee = col(hha[origRi], 5) ?? maxNum(hha[origRi], 100);
+    const origRi = findRow(agencySheet, "origination fee");
+    if (origRi >= 0) m.originationFee = col(agencySheet[origRi], 5) ?? maxNum(agencySheet[origRi], 100);
 
     // PILOT — label "PILOT Fee" lives in col D; findRow picks the row because it scans all cells
-    const pilotRi = findRow(hha, "pilot fee");
-    if (pilotRi >= 0) m.pilotPayments = col(hha[pilotRi], 5) ?? maxNum(hha[pilotRi], 100);
+    const pilotRi = findRow(agencySheet, "pilot fee");
+    if (pilotRi >= 0) m.pilotPayments = col(agencySheet[pilotRi], 5) ?? maxNum(agencySheet[pilotRi], 100);
 
     // Capital Events — col F (idx 5)
-    const capRi = findRow(hha, "capital event");
-    if (capRi >= 0) m.capitalEventsShare = col(hha[capRi], 5) ?? maxNum(hha[capRi], 100);
+    const capRi = findRow(agencySheet, "capital event");
+    if (capRi >= 0) m.capitalEventsShare = col(agencySheet[capRi], 5) ?? maxNum(agencySheet[capRi], 100);
 
     // Annual Compliance / Asset & Compliance — col F (idx 5)
-    const compRi = findRow(hha, "compliance fee") >= 0
-      ? findRow(hha, "compliance fee")
-      : findRow(hha, "asset & compliance");
-    if (compRi >= 0) m.annualComplianceFees = col(hha[compRi], 5) ?? maxNum(hha[compRi], 100);
+    const compRi = findRow(agencySheet, "compliance fee") >= 0
+      ? findRow(agencySheet, "compliance fee")
+      : findRow(agencySheet, "asset & compliance");
+    if (compRi >= 0) m.annualComplianceFees = col(agencySheet[compRi], 5) ?? maxNum(agencySheet[compRi], 100);
 
     // Total Direct Benefits — col I (idx 8)
-    const tdbRi = findRow(hha, "total direct");
-    if (tdbRi >= 0) m.totalDirectBenefits = col(hha[tdbRi], 8) ?? maxNum(hha[tdbRi], 1000);
+    const tdbRi = findRow(agencySheet, "total direct");
+    if (tdbRi >= 0) m.totalDirectBenefits = col(agencySheet[tdbRi], 8) ?? maxNum(agencySheet[tdbRi], 1000);
 
     // Total Public Benefit — col I (idx 8)
-    const tpbRi = findRow(hha, "total public benefit");
-    if (tpbRi >= 0) m.totalPublicBenefit = col(hha[tpbRi], 8) ?? maxNum(hha[tpbRi], 1000);
+    const tpbRi = findRow(agencySheet, "total public benefit");
+    if (tpbRi >= 0) m.totalPublicBenefit = col(agencySheet[tpbRi], 8) ?? maxNum(agencySheet[tpbRi], 1000);
 
     // Total Property Tax Savings — col I (idx 8)
-    const taxRi = findRow(hha, "total est property tax");
-    if (taxRi >= 0) m.totalPropertyTaxSavings = col(hha[taxRi], 8) ?? maxNum(hha[taxRi], 1000);
+    const taxRi = findRow(agencySheet, "total est property tax");
+    if (taxRi >= 0) m.totalPropertyTaxSavings = col(agencySheet[taxRi], 8) ?? maxNum(agencySheet[taxRi], 1000);
 
     // Public vs Private Difference — col I (can be negative)
-    const diffRi = findRow(hha, "difference");
-    if (diffRi >= 0) m.publicPrivateDiff = col(hha[diffRi], 8) ?? maxNum(hha[diffRi], 1);
+    const diffRi = findRow(agencySheet, "difference");
+    if (diffRi >= 0) m.publicPrivateDiff = col(agencySheet[diffRi], 8) ?? maxNum(agencySheet[diffRi], 1);
 
     // Public/Private Percentage — col I, value is 0–1
-    const pctRi = findRow(hha, "percentage");
+    const pctRi = findRow(agencySheet, "percentage");
     if (pctRi >= 0) {
-      const v = col(hha[pctRi], 8) ?? firstNum(hha[pctRi], 0);
+      const v = col(agencySheet[pctRi], 8) ?? firstNum(agencySheet[pctRi], 0);
       if (v !== null && Math.abs(v) <= 1) m.publicPrivatePct = v;
     }
 
     // Number of Units — col I (idx 8)
-    const unitsRi = findRow(hha, "number of units");
-    if (unitsRi >= 0) m.totalUnits = col(hha[unitsRi], 8) ?? firstNum(hha[unitsRi], 1);
+    const unitsRi = findRow(agencySheet, "number of units");
+    if (unitsRi >= 0) m.totalUnits = col(agencySheet[unitsRi], 8) ?? firstNum(agencySheet[unitsRi], 1);
   }
 
   // ── Benefits Analysis — year-by-year PILOT payments ──────────────────────
@@ -183,7 +183,7 @@ function parse(wb: XLSX.WorkBook): PILOTMetrics {
       }
       if (years.some((v) => v !== 0)) m.pilotByYear = years;
 
-      // Prefer the 10-yr total from col O over the HHA sheet value
+      // Prefer the 10-yr total from col O over the Agency sheet value
       const total = col(benef[pilotRi], 14) ?? maxNum(benef[pilotRi], 1000);
       if (total) m.pilotPayments = total;
     }
@@ -199,7 +199,7 @@ function parse(wb: XLSX.WorkBook): PILOTMetrics {
   // Uses col G (idx 6) for dollar totals; col E (idx 4) for unit count
   const su = readSheet(wb, ["SOURCES and USES of FUNDS", "Sources and Uses"]);
   if (su) {
-    // "Project Cost + HHA Acquisition Fee" = true TDC incl all closing costs
+    // "Project Cost + Agency/HHA Acquisition Fee" = true TDC incl all closing costs
     const tdcRi = findRow(su, "project cost + hha");
     if (tdcRi >= 0) m.totalProjectCost = col(su[tdcRi], 6) ?? maxNum(su[tdcRi], 1000);
     // fallback to "total project cost" line
@@ -382,102 +382,58 @@ export default function PILOTAnalysisPage() {
             </p>
             <p className="text-xs text-slate-400 leading-relaxed">
               For housing authority and municipal finance staff reviewing PILOT agreements.
-              Share the template below with the developer — they fill in the yellow input cells
-              and return the completed workbook. Upload it here to instantly surface tax impact,
+              Upload the developer&apos;s completed workbook to instantly surface tax impact,
               affordability commitments, agency income streams, and the public-vs-private benefit ratio.
+              Parsing runs entirely in your browser — no data leaves your device.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Step 1: Download */}
-          <section className="bg-[#0F1729] border border-slate-800 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-5 h-5 rounded-full bg-purple-800/60 text-purple-300 text-xs font-bold flex items-center justify-center shrink-0">1</span>
-              <h2 className="text-sm font-bold text-white">Download Template</h2>
-            </div>
-            <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              Send this workbook to the developer. All public benefit figures populate automatically
-              across <span className="text-slate-300 font-mono">HHA Benefits Analysis</span> and{" "}
-              <span className="text-slate-300 font-mono">Benefits Analysis</span> once they enter inputs.
-            </p>
-            <a
-              href="/templates/RipeSpot%20PILOT%20Public%20Benefit%20Analysis.xlsm"
-              download
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-700 hover:bg-purple-600 text-white text-sm font-semibold transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Download (.xlsm)
-            </a>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {[
-                { sheet: "HHA Benefits Analysis",  desc: "Agency-facing summary" },
-                { sheet: "Benefits Analysis",       desc: "10-yr benefit breakdown" },
-                { sheet: "SOURCES and USES",        desc: "Cost & capital structure" },
-                { sheet: "P&L",                     desc: "Operating pro forma" },
-              ].map((s) => (
-                <div key={s.sheet} className="bg-slate-900/60 rounded-lg px-3 py-2">
-                  <p className="text-[11px] font-semibold text-purple-400 truncate">{s.sheet}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{s.desc}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Step 2: Upload */}
-          <section className="bg-[#0F1729] border border-slate-800 rounded-2xl p-6 flex flex-col">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-5 h-5 rounded-full bg-purple-800/60 text-purple-300 text-xs font-bold flex items-center justify-center shrink-0">2</span>
-              <h2 className="text-sm font-bold text-white">Upload Completed Workbook</h2>
-            </div>
-            <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              Upload the developer&apos;s completed file. Parsing runs entirely in your browser —
-              no data leaves your device.
-            </p>
-            <div
-              className="flex-1 border-2 border-dashed border-slate-700 rounded-xl p-6 text-center cursor-pointer hover:border-purple-700/60 transition-colors flex flex-col items-center justify-center gap-2"
-              onClick={() => inputRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
-            >
-              <input
-                ref={inputRef}
-                type="file"
-                accept=".xlsx,.xlsm,.xls"
-                className="hidden"
-                onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }}
-              />
-              {parsing ? (
-                <p className="text-slate-400 text-sm">Parsing workbook…</p>
-              ) : fileName ? (
-                <>
-                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <p className="text-purple-300 text-sm font-semibold">{fileName}</p>
-                  <p className="text-slate-500 text-xs">Click or drop to replace</p>
-                </>
-              ) : (
-                <>
-                  <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                      d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <p className="text-slate-400 text-sm">Drop .xlsm / .xlsx here</p>
-                  <p className="text-slate-600 text-xs">or click to browse</p>
-                </>
-              )}
-            </div>
-            {parseError && (
-              <p className="mt-3 text-xs text-red-400 bg-red-900/20 border border-red-700/30 rounded-lg px-3 py-2">
-                {parseError}
-              </p>
+        {/* Upload */}
+        <section className="bg-[#0F1729] border border-slate-800 rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-sm font-bold text-white">Upload Completed Workbook</h2>
+          </div>
+          <div
+            className="border-2 border-dashed border-slate-700 rounded-xl p-10 text-center cursor-pointer hover:border-purple-700/60 transition-colors flex flex-col items-center justify-center gap-2"
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".xlsx,.xlsm,.xls"
+              className="hidden"
+              onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }}
+            />
+            {parsing ? (
+              <p className="text-slate-400 text-sm">Parsing workbook…</p>
+            ) : fileName ? (
+              <>
+                <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <p className="text-purple-300 text-sm font-semibold">{fileName}</p>
+                <p className="text-slate-500 text-xs">Click or drop to replace</p>
+              </>
+            ) : (
+              <>
+                <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                    d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p className="text-slate-400 text-sm">Drop .xlsm / .xlsx here</p>
+                <p className="text-slate-600 text-xs">or click to browse</p>
+              </>
             )}
-          </section>
-        </div>
+          </div>
+          {parseError && (
+            <p className="mt-3 text-xs text-red-400 bg-red-900/20 border border-red-700/30 rounded-lg px-3 py-2">
+              {parseError}
+            </p>
+          )}
+        </section>
 
         {/* ── Results ─────────────────────────────────────────────────────── */}
         {hasResults && m && (

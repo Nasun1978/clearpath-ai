@@ -462,6 +462,55 @@ export interface TeamMember {
   created_at: string;
 }
 
+// ── Document Repository ───────────────────────────────────────────────────────
+
+export type CompanyDocumentType =
+  | "w9"
+  | "board_resolution"
+  | "tax_clearance"
+  | "affidavit_work_site"
+  | "good_standing"
+  | "annual_inspection"
+  | "rental_application"
+  | "tenant_id"
+  | "tenant_income"
+  | "other";
+
+export interface CompanyDocumentTypeMeta {
+  value: CompanyDocumentType;
+  label: string;
+  description: string;
+  icon: string;  // emoji shorthand for rendering
+}
+
+export const COMPANY_DOCUMENT_TYPES: CompanyDocumentTypeMeta[] = [
+  { value: "w9",               label: "W-9 Form",                              description: "IRS Request for Taxpayer Identification and Certification",                   icon: "🏛️" },
+  { value: "board_resolution", label: "Board Resolution",                       description: "Corporate authorization for transactions, signatories, or actions",         icon: "📋" },
+  { value: "tax_clearance",    label: "Tax Clearance Certificate",              description: "State-issued proof of no outstanding tax liabilities",                       icon: "✅" },
+  { value: "affidavit_work_site", label: "Affidavit of Work Site",             description: "Sworn statement confirming work site location and conditions",               icon: "📝" },
+  { value: "good_standing",    label: "Good Standing Certificate",              description: "Secretary of State confirmation that entity is active and compliant",        icon: "🏆" },
+  { value: "annual_inspection",label: "Annual Inspection Report",               description: "Property inspection results required by housing agencies",                  icon: "🔍" },
+  { value: "rental_application",label: "Rental Application Template",          description: "Standard application form used for prospective tenants",                    icon: "📄" },
+  { value: "tenant_id",        label: "Tenant Identification Documents",        description: "Acceptable forms of ID for tenant eligibility verification",                icon: "🪪" },
+  { value: "tenant_income",    label: "Tenant Income Verification Documents",   description: "Templates or samples for verifying tenant income (pay stubs, tax returns)", icon: "💰" },
+  { value: "other",            label: "Other",                                  description: "Other company documents not covered by the above categories",               icon: "📁" },
+];
+
+export interface CompanyDocument {
+  id: string;
+  user_id: string;
+  document_type: CompanyDocumentType;
+  document_name: string;
+  file_url: string;
+  file_path: string;
+  file_size: number | null;
+  uploaded_at: string;
+  expires_at: string | null;
+  notes: string | null;
+  // Added server-side at query time
+  signed_url?: string;
+}
+
 export interface TaskAssignment {
   id: string;
   checklist_item_id: string;

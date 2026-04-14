@@ -653,6 +653,15 @@ export default function DocumentsPage() {
                 type: "Excel (.xlsx)",
               },
             {
+                name: "W-9 Form (IRS)",
+                description: "IRS Request for Taxpayer Identification Number and Certification — required by housing agencies before issuing payments",
+                icon: "🏛️",
+                badge: "W-9 Form",
+                href: "/templates/W9_Form.pdf",
+                filename: "W9_Form.pdf",
+                type: "PDF",
+              },
+            {
                 name: "Cost Containment Certification (Louisiana)",
                 description: "LHC-required cost containment certification signed by developer and general contractor at application",
                 icon: "📋",

@@ -629,6 +629,60 @@ export default function DocumentsPage() {
           )}
         </section>
 
+        {/* Template Library */}
+        <section>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Template Library</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              {
+                name: "Rent Schedule Template",
+                description: "Track units, tenants, and rent collection",
+                icon: "🏠",
+                badge: "Rental Application",
+                href: "/templates/Rent_Schedule_Template.xlsx",
+                filename: "Rent_Schedule_Template.xlsx",
+                type: "Excel (.xlsx)",
+              },
+              {
+                name: "Annual Inspection Report",
+                description: "Comprehensive property inspection checklist for compliance",
+                icon: "🔍",
+                badge: "Annual Inspection",
+                href: "/templates/Annual_Inspection_Template.xlsx",
+                filename: "Annual_Inspection_Template.xlsx",
+                type: "Excel (.xlsx)",
+              },
+            ].map((tpl) => (
+              <div key={tpl.name} className="bg-[#0F1729] border border-slate-800 rounded-xl p-4 flex items-start gap-4 hover:border-teal-800/50 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-teal-900/30 border border-teal-800/40 flex items-center justify-center text-xl shrink-0">
+                  {tpl.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white">{tpl.name}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{tpl.description}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-900/40 text-teal-400 border border-teal-800/40 font-semibold">
+                      {tpl.badge}
+                    </span>
+                    <span className="text-[10px] text-slate-600">{tpl.type}</span>
+                  </div>
+                </div>
+                <a
+                  href={tpl.href}
+                  download={tpl.filename}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-800/40 hover:bg-teal-700/50 text-teal-300 text-xs font-semibold border border-teal-700/40 transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download
+                </a>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Info cards for each document type */}
         {typeFilter === "all" && documents.length === 0 && !loading && (
           <section>

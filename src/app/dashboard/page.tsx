@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import type { ProposalListItem, DashboardStats, ChecklistItem } from "@/types";
+import type { ProposalListItem, DashboardStats, ChecklistItem, TaskAssignment } from "@/types";
 import {
   formatCurrency,
   formatPercent,
@@ -60,6 +60,7 @@ export default function DashboardPage() {
   const [deadlines, setDeadlines] = useState<DeadlineNotif[]>([]);
   const [bellOpen, setBellOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
+  const [myAssignments, setMyAssignments] = useState<TaskAssignment[]>([]);
 
   // Close bell dropdown when clicking outside
   useEffect(() => {
@@ -73,10 +74,11 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [proposalsRes, statsRes, checklistRes] = await Promise.all([
+        const [proposalsRes, statsRes, checklistRes, myAssignRes] = await Promise.all([
           fetch("/api/proposals" + (statusFilter !== "all" ? `?status=${statusFilter}` : "")),
           fetch("/api/dashboard-stats"),
           fetch("/api/checklist"),
+          fetch("/api/my-assignments"),
         ]);
         const proposalsData = await proposalsRes.json();
         const statsData = await statsRes.json();
@@ -86,6 +88,11 @@ export default function DashboardPage() {
         if (checklistRes.ok) {
           const checklistData = await checklistRes.json() as { checklists?: { project_name: string; checklist_items: ChecklistItem[] }[] };
           setDeadlines(classifyDeadlines(checklistData.checklists ?? []));
+        }
+
+        if (myAssignRes.ok) {
+          const assignData = await myAssignRes.json() as { assignments?: TaskAssignment[] };
+          setMyAssignments(assignData.assignments ?? []);
         }
       } catch (error) {
         console.error("Failed to load dashboard:", error);
@@ -318,6 +325,69 @@ export default function DashboardPage() {
                   </span>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* My Assigned Tasks widget */}
+        {myAssignments.length > 0 && (
+          <div className="mb-8 bg-[#0F1729] border border-teal-800/30 rounded-xl overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">My Assigned Tasks</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-teal-900/40 text-teal-300 border border-teal-800/50 font-semibold">
+                  {myAssignments.filter((a) => a.status !== "complete").length} open
+                </span>
+              </div>
+              <Link href="/dashboard/checklist" className="text-xs text-teal-400 hover:text-teal-300 transition-colors">
+                Open checklist →
+              </Link>
+            </div>
+            <div className="divide-y divide-slate-800/50">
+              {myAssignments.map((a) => {
+                const isComplete = a.status === "complete";
+                const isOverdue  = a.due_date && new Date(a.due_date + "T23:59:59") < new Date();
+                return (
+                  <div
+                    key={a.id}
+                    className={`px-5 py-3 flex items-center gap-4 ${isComplete ? "opacity-50" : isOverdue ? "bg-red-950/10" : ""}`}
+                  >
+                    <div className={`shrink-0 w-1 self-stretch rounded-full ${
+                      isComplete ? "bg-emerald-600" : isOverdue ? "bg-red-500" : "bg-teal-500"
+                    }`} />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm truncate ${isComplete ? "text-slate-500 line-through" : "text-slate-200"}`}>
+                        {a.item_text}
+                      </p>
+                      {a.checklist_name && (
+                        <p className="text-xs text-slate-500 mt-0.5">{a.checklist_name}</p>
+                      )}
+                    </div>
+                    <div className="shrink-0 flex items-center gap-2">
+                      {a.due_date && (
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${
+                          isOverdue
+                            ? "bg-red-900/30 text-red-400 border-red-700/30"
+                            : "bg-slate-800 text-slate-400 border-slate-700"
+                        }`}>
+                          {new Date(a.due_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                      )}
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                        a.status === "complete"   ? "bg-emerald-900/30 text-emerald-400 border-emerald-700/30" :
+                        a.status === "in_progress"? "bg-blue-900/30 text-blue-400 border-blue-700/30" :
+                        "bg-slate-800 text-slate-500 border-slate-700"
+                      }`}>
+                        {a.status === "in_progress" ? "In Progress" : a.status === "complete" ? "Done" : "Pending"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

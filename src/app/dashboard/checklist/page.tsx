@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { CHECKLIST_SECTIONS, buildDefaultItems, getItemGuidance, LHC_SUGGESTED_DEADLINES } from "./data";
 import type { ChecklistItemState } from "./data";
+import type { TeamMember, TaskAssignment } from "@/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -88,9 +89,11 @@ interface ItemRowProps {
   onChange: (id: string, field: keyof ChecklistItemState, value: unknown) => void;
   onUpload: (id: string, file: File) => void;
   uploading: boolean;
+  teamMembers: TeamMember[];
+  onAssign: (itemId: string, email: string | null) => void;
 }
 
-function ItemRow({ item, onChange, onUpload, uploading }: ItemRowProps) {
+function ItemRow({ item, onChange, onUpload, uploading, teamMembers, onAssign }: ItemRowProps) {
   const [notesOpen, setNotesOpen] = useState(false);
   const guidance = getItemGuidance(item.id);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -183,6 +186,33 @@ function ItemRow({ item, onChange, onUpload, uploading }: ItemRowProps) {
               </button>
             )}
 
+            {/* Assign to team member */}
+            {teamMembers.length > 0 && (
+              <div className="flex items-center gap-1">
+                <svg className="w-3 h-3 shrink-0 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <select
+                  value={item.assigned_to_email ?? ""}
+                  onChange={(e) => onAssign(item.id, e.target.value || null)}
+                  className="bg-transparent text-xs text-slate-500 hover:text-slate-300 focus:outline-none cursor-pointer"
+                >
+                  <option value="">Assign to…</option>
+                  {teamMembers.map((m) => (
+                    <option key={m.id} value={m.email}>
+                      {m.full_name} ({m.role})
+                    </option>
+                  ))}
+                </select>
+                {item.assigned_to_email && (
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-teal-900/40 text-teal-300 border border-teal-700/40">
+                    {teamMembers.find((m) => m.email === item.assigned_to_email)?.full_name?.split(" ")[0] ?? item.assigned_to_email}
+                  </span>
+                )}
+              </div>
+            )}
+
             {item.uploaded_file_url ? (
               <a
                 href={item.uploaded_file_url}
@@ -251,11 +281,13 @@ interface SectionProps {
   onItemChange: (id: string, field: keyof ChecklistItemState, value: unknown) => void;
   onUpload: (id: string, file: File) => void;
   uploadingItems: Record<string, boolean>;
+  teamMembers: TeamMember[];
+  onAssign: (itemId: string, email: string | null) => void;
 }
 
 function ChecklistSection({
   sectionNum, title, description, items, expanded, onToggle,
-  onItemChange, onUpload, uploadingItems,
+  onItemChange, onUpload, uploadingItems, teamMembers, onAssign,
 }: SectionProps) {
   const { checked, total } = sectionProgress(items, sectionNum);
   const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
@@ -323,6 +355,8 @@ function ChecklistSection({
                   onChange={onItemChange}
                   onUpload={onUpload}
                   uploading={!!uploadingItems[item.id]}
+                  teamMembers={teamMembers}
+                  onAssign={onAssign}
                 />
               ))}
           </div>
@@ -344,6 +378,7 @@ export default function ChecklistPage() {
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [initializing, setInitializing] = useState(true);
   const [supabaseAvailable, setSupabaseAvailable] = useState(true);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Load on mount ──────────────────────────────────────────────────────────
@@ -403,11 +438,33 @@ export default function ChecklistPage() {
             // Merge saved items; back-fill due_date for pre-feature records.
             const defaults = buildDefaultItems();
             const savedMap = new Map((c.checklist_items ?? []).map((i) => [i.id, i]));
+
+            // Load assignments and overlay assigned_to_email onto items
+            let assignmentMap = new Map<string, string>();
+            try {
+              const assignRes = await fetch(`/api/task-assignments?checklist_id=${c.id}`);
+              if (assignRes.ok) {
+                const assignData = await assignRes.json() as { assignments?: TaskAssignment[] };
+                for (const a of assignData.assignments ?? []) {
+                  assignmentMap.set(a.checklist_item_id, a.assigned_to_email);
+                }
+              }
+            } catch { /* non-fatal */ }
+
             setItems(defaults.map((d) => {
               const saved = savedMap.get(d.id);
-              if (!saved) return d;
-              return saved.due_date === undefined ? { ...saved, due_date: d.due_date } : saved;
+              const base = !saved ? d : (saved.due_date === undefined ? { ...saved, due_date: d.due_date } : saved);
+              return { ...base, assigned_to_email: assignmentMap.get(d.id) ?? base.assigned_to_email ?? null };
             }));
+
+            // Load team members for all projects so we can offer an "assign to" dropdown
+            try {
+              const membersRes = await fetch("/api/team-members");
+              if (membersRes.ok) {
+                const membersData = await membersRes.json() as { members?: TeamMember[] };
+                setTeamMembers(membersData.members ?? []);
+              }
+            } catch { /* non-fatal */ }
           }
         }
       } catch {
@@ -483,6 +540,54 @@ export default function ChecklistPage() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => doSave(nextItems, nextInfo, cId, supAvail), 1200);
   }, [doSave]);
+
+  // ── Assignment handler ─────────────────────────────────────────────────────
+  async function handleAssign(itemId: string, email: string | null) {
+    // Optimistically update the item
+    setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, assigned_to_email: email } : i));
+
+    if (!checklistId || !supabaseAvailable) return;
+
+    if (!email) {
+      // Remove assignment
+      await fetch(
+        `/api/task-assignments?checklist_item_id=${encodeURIComponent(itemId)}&checklist_id=${checklistId}`,
+        { method: "DELETE" }
+      ).catch(() => null);
+      return;
+    }
+
+    const item = items.find((i) => i.id === itemId);
+    const member = teamMembers.find((m) => m.email === email);
+
+    await fetch("/api/task-assignments", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        checklist_item_id: itemId,
+        checklist_id:      checklistId,
+        assigned_to_email: email,
+        item_text:         item?.text ?? "",
+        checklist_name:    projectInfo.project_name || "LIHTC Checklist",
+        due_date:          item?.due_date ?? null,
+      }),
+    }).catch(() => null);
+
+    // Fire-and-forget notification
+    if (member) {
+      fetch("/api/notify-assignment", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email:          member.email,
+          full_name:      member.full_name,
+          item_text:      item?.text ?? "",
+          checklist_name: projectInfo.project_name || "LIHTC Checklist",
+          due_date:       item?.due_date ?? null,
+        }),
+      }).catch(() => null);
+    }
+  }
 
   // ── Item change handler ────────────────────────────────────────────────────
   function handleItemChange(id: string, field: keyof ChecklistItemState, value: unknown) {
@@ -755,6 +860,8 @@ export default function ChecklistPage() {
               onItemChange={handleItemChange}
               onUpload={handleUpload}
               uploadingItems={uploadingItems}
+              teamMembers={teamMembers}
+              onAssign={handleAssign}
             />
           ))}
         </div>

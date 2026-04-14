@@ -414,6 +414,67 @@ export interface ChecklistItem {
   uploaded_file_url: string | null;
   uploaded_file_name: string | null;
   due_date: string | null;
+  assigned_to_email: string | null;
+}
+
+// ── Team Management ───────────────────────────────────────────────────────────
+
+export type TeamMemberRole =
+  | "Developer"
+  | "Co-Developer"
+  | "Architect"
+  | "General Contractor"
+  | "Civil Engineer"
+  | "Structural Engineer"
+  | "MEP Engineer"
+  | "Attorney"
+  | "Lender"
+  | "Market Analyst"
+  | "Property Manager"
+  | "Tax Credit Syndicator"
+  | "Accountant"
+  | "Environmental Consultant"
+  | "Appraiser"
+  | "Surveyor"
+  | "Title Company"
+  | "Consultant"
+  | "Government Liaison"
+  | "Other";
+
+export const TEAM_MEMBER_ROLES: TeamMemberRole[] = [
+  "Developer", "Co-Developer", "Architect", "General Contractor",
+  "Civil Engineer", "Structural Engineer", "MEP Engineer", "Attorney",
+  "Lender", "Market Analyst", "Property Manager", "Tax Credit Syndicator",
+  "Accountant", "Environmental Consultant", "Appraiser", "Surveyor",
+  "Title Company", "Consultant", "Government Liaison", "Other",
+];
+
+export interface TeamMember {
+  id: string;
+  project_id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  role: TeamMemberRole;
+  company: string | null;
+  notes: string | null;
+  invited_by: string | null;
+  created_at: string;
+}
+
+export interface TaskAssignment {
+  id: string;
+  checklist_item_id: string;
+  checklist_id: string;
+  item_text: string | null;
+  checklist_name: string | null;
+  assigned_to_email: string;
+  assigned_by: string | null;
+  due_date: string | null;
+  status: "pending" | "in_progress" | "complete";
+  notes: string | null;
+  notified_at: string | null;
+  created_at: string;
 }
 
 export type ChecklistProjectType =

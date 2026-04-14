@@ -576,6 +576,7 @@ export interface ChecklistItemState {
   uploaded_file_url: string | null;
   uploaded_file_name: string | null;
   due_date: string | null;
+  assigned_to_email: string | null;
 }
 
 // ── LHC 2025 QAP Suggested Deadlines ─────────────────────────────────────────
@@ -649,6 +650,7 @@ export function buildDefaultItems(): ChecklistItemState[] {
       uploaded_file_url: null,
       uploaded_file_name: null,
       due_date: LHC_SUGGESTED_DEADLINES[item.id] ?? null,
+      assigned_to_email: null,
     }))
   );
 }

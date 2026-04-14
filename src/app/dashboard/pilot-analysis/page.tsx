@@ -99,6 +99,19 @@ function firstNumeric(row: (string | number | boolean | null)[], minAbs = 0): nu
   return null;
 }
 
+// Return the largest-absolute-value number in a row, ignoring values below minAbs.
+// Used for HHA Benefits Analysis where aggregate totals are the largest values in each row,
+// with per-unit amounts and percentages appearing in adjacent columns.
+function maxNumeric(row: (string | number | boolean | null)[], minAbs = 1): number | null {
+  let best: number | null = null;
+  for (const c of row) {
+    if (typeof c === "number" && Math.abs(c) >= minAbs) {
+      if (best === null || Math.abs(c) > Math.abs(best)) best = c;
+    }
+  }
+  return best;
+}
+
 // ── Parser ────────────────────────────────────────────────────────────────────
 
 function extractPILOT(wb: XLSX.WorkBook): PILOTMetrics {
@@ -127,53 +140,67 @@ function extractPILOT(wb: XLSX.WorkBook): PILOTMetrics {
     yearlyBenefits: [],
   };
 
-  // ── Municipality Benefits Analysis ───────────────────────────────────────────
-  // This is the government-facing benefits summary sheet.
-  const muni = readSheet(wb, ["Municipality Benefits Analysis"]);
+  // ── HHA / Municipality Benefits Analysis ─────────────────────────────────────
+  // Government-facing benefits summary sheet.
+  // New template (2026+): sheet is named "HHA Benefits Analysis"
+  //   Layout: totals in col F (individual items) or col I (summary rows),
+  //   followed by per-unit (col G/J) and % (col H/K) — maxNumeric picks the right value.
+  // Old template: sheet is named "Municipality Benefits Analysis"
+  //   Layout: totals in rightmost column — maxNumeric also works here.
+  const muni = readSheet(wb, ["HHA Benefits Analysis", "Municipality Benefits Analysis"]);
   if (muni) {
     const adjRentRi = findRow(muni, "adj rent");
-    if (adjRentRi >= 0) m.adjRentBenefit = lastNumeric(muni[adjRentRi], 1) ?? null;
+    if (adjRentRi >= 0) m.adjRentBenefit = maxNumeric(muni[adjRentRi], 1000) ?? null;
 
     const origRi = findRow(muni, "origination fee");
-    if (origRi >= 0) m.originationFee = lastNumeric(muni[origRi], 1) ?? null;
+    if (origRi >= 0) m.originationFee = maxNumeric(muni[origRi], 100) ?? null;
 
-    const cfRi = findRow(muni, "cash flow");
-    if (cfRi >= 0) m.cashFlowShare = lastNumeric(muni[cfRi], 1) ?? null;
+    // New template: "Cash Flow" row (A11) holds the agency's cash flow share RATE (C=0 in 2026 file),
+    // while D11 says "PILOT Fee" and F11 is the PILOT total. Search "cash flow share" (old label)
+    // so it matches the old sheet but NOT the new "Cash Flow" row, keeping cashFlowShare null/0 correctly.
+    const cfRi = findRow(muni, "cash flow share");
+    if (cfRi >= 0) m.cashFlowShare = maxNumeric(muni[cfRi], 100) ?? null;
 
-    const pilotRi = findRow(muni, "pilot");
-    if (pilotRi >= 0) m.pilotPayments = lastNumeric(muni[pilotRi], 1) ?? null;
+    // "PILOT" matches both old "PILOT" row and new D11="PILOT Fee" cell
+    const pilotRi = findRow(muni, "pilot fee");
+    const pilotRiFallback = findRow(muni, "pilot");
+    const effectivePilotRi = pilotRi >= 0 ? pilotRi : pilotRiFallback;
+    if (effectivePilotRi >= 0) m.pilotPayments = maxNumeric(muni[effectivePilotRi], 100) ?? null;
 
     const capRi = findRow(muni, "capital event");
-    if (capRi >= 0) m.capitalEventShare = lastNumeric(muni[capRi], 1) ?? null;
+    if (capRi >= 0) m.capitalEventShare = maxNumeric(muni[capRi], 100) ?? null;
 
-    const assetRi = findRow(muni, "asset & compliance");
-    if (assetRi >= 0) m.assetComplianceFees = firstNumeric(muni[assetRi], 1) ?? null;
+    // New template: "Annual Compliance Fee" — old template: "Asset & Compliance Fees"
+    const assetRi = findRow(muni, "asset & compliance") >= 0
+      ? findRow(muni, "asset & compliance")
+      : findRow(muni, "compliance fee");
+    if (assetRi >= 0) m.assetComplianceFees = maxNumeric(muni[assetRi], 100) ?? null;
 
     // "Total Public Benefit" row
     const tpbRi = findRow(muni, "total public benefit");
-    if (tpbRi >= 0) m.totalPublicBenefit = firstNumeric(muni[tpbRi], 1) ?? null;
+    if (tpbRi >= 0) m.totalPublicBenefit = maxNumeric(muni[tpbRi], 1000) ?? null;
 
     // "Total Est Property Tax Savings"
     const taxRi = findRow(muni, "total est property tax");
-    if (taxRi >= 0) m.totalPropertyTaxSavings = firstNumeric(muni[taxRi], 1) ?? null;
+    if (taxRi >= 0) m.totalPropertyTaxSavings = maxNumeric(muni[taxRi], 1000) ?? null;
 
-    // "Difference" (public vs private benefit gap)
+    // "Difference" (public vs private benefit gap — may be negative)
     const diffRi = findRow(muni, "difference");
-    if (diffRi >= 0) m.publicPrivateDifference = firstNumeric(muni[diffRi], 1) ?? null;
+    if (diffRi >= 0) m.publicPrivateDifference = maxNumeric(muni[diffRi], 1) ?? null;
 
-    // "Percentage"
+    // "Percentage" — value is between 0 and 1
     const pctRi = findRow(muni, "percentage");
     if (pctRi >= 0) {
-      const v = firstNumeric(muni[pctRi], 0);
-      if (v !== null && v > 0 && v <= 1) m.publicPrivatePct = v;
+      const v = maxNumeric(muni[pctRi], 0);
+      if (v !== null && Math.abs(v) > 0 && Math.abs(v) <= 1) m.publicPrivatePct = v;
     }
 
     // Number of units
     const unitsRi = findRow(muni, "number of units");
-    if (unitsRi >= 0) m.totalUnits = firstNumeric(muni[unitsRi], 1) ?? null;
+    if (unitsRi >= 0) m.totalUnits = maxNumeric(muni[unitsRi], 1) ?? null;
   }
 
-  // ── Summary Page: fallback for benefit components if muni sheet was empty ────
+  // ── Summary Page: fallback for old template only (removed in 2026 template) ──
   const summary = readSheet(wb, ["Summary Page", "Summary"]);
   if (summary) {
     if (!m.totalPublicBenefit) {
@@ -208,10 +235,14 @@ function extractPILOT(wb: XLSX.WorkBook): PILOTMetrics {
 
   // ── Benefits Analysis: year-by-year detail ────────────────────────────────────
   // Columns C–L = Years 1–10 (0-indexed cols 2–11)
-  // Column N = 10-year Sponsor total; col O = 10-year municipality total / %age
+  // Column N = 10-year Sponsor total; col O = 10-year HHA/municipality total; col P = %age
+  // New template labels: "Asset Management Fee" (row 20), "PILOT Fee" (row 19), "Origination Fee" (row 18)
   const benef = readSheet(wb, ["Benefits Analysis"]);
   if (benef) {
-    const assetRi = findRow(benef, "asset");
+    // "Asset Management Fee" (new) or generic "asset" match (old)
+    const assetRi = findRow(benef, "asset management fee") >= 0
+      ? findRow(benef, "asset management fee")
+      : findRow(benef, "asset");
     const pilotRi = findRow(benef, "pilot");
     const cfRi    = findRow(benef, "cash flow");
     const origRi  = findRow(benef, "origination fee");
@@ -444,7 +475,7 @@ export default function PILOTAnalysisPage() {
             Share this workbook with the developer applicant. They fill in the yellow input cells; all
             public benefit calculations populate automatically across the{" "}
             <span className="text-slate-300 font-mono text-xs">Benefits Analysis</span> and{" "}
-            <span className="text-slate-300 font-mono text-xs">Municipality Benefits Analysis</span> sheets.
+            <span className="text-slate-300 font-mono text-xs">HHA Benefits Analysis</span> sheets.
           </p>
           <a
             href="/templates/Public%20Benefit%20Analysis%20(Government%20Customer).xlsm"
@@ -459,10 +490,10 @@ export default function PILOTAnalysisPage() {
           </a>
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { sheet: "Summary Page",                  desc: "Project inputs and key ratios" },
-              { sheet: "Municipality Benefits Analysis", desc: "Government-facing benefit summary" },
-              { sheet: "Benefits Analysis",             desc: "10-year benefit breakdown by stream" },
-              { sheet: "10 Years Mixed",                desc: "Income & expense pro forma" },
+              { sheet: "HHA Benefits Analysis",  desc: "Agency-facing public benefit summary" },
+              { sheet: "Benefits Analysis",       desc: "10-year benefit breakdown by stream" },
+              { sheet: "SOURCES and USES",        desc: "Project cost and capital structure" },
+              { sheet: "P&L",                     desc: "Operating income & expense pro forma" },
             ].map((s) => (
               <div key={s.sheet} className="bg-slate-900/60 rounded-lg px-3 py-2.5">
                 <p className="text-xs font-semibold text-purple-400">{s.sheet}</p>

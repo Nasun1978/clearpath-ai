@@ -652,6 +652,15 @@ export default function DocumentsPage() {
                 filename: "Annual_Inspection_Template.xlsx",
                 type: "Excel (.xlsx)",
               },
+            {
+                name: "Cost Containment Certification (Louisiana)",
+                description: "LHC-required cost containment certification signed by developer and general contractor at application",
+                icon: "📋",
+                badge: "Board Resolution",
+                href: "/templates/Cost_Containment_Louisiana.xlsm",
+                filename: "Cost_Containment_Louisiana.xlsm",
+                type: "Excel (.xlsm)",
+              },
             ].map((tpl) => (
               <div key={tpl.name} className="bg-[#0F1729] border border-slate-800 rounded-xl p-4 flex items-start gap-4 hover:border-teal-800/50 transition-colors">
                 <div className="w-10 h-10 rounded-xl bg-teal-900/30 border border-teal-800/40 flex items-center justify-center text-xl shrink-0">

@@ -586,3 +586,46 @@ export interface ProposalListItem {
   open_deficiencies: number;
   document_count: number;
 }
+
+// =============================================================================
+// Stripe Billing Types
+// =============================================================================
+
+export type PlanTier = 'trial' | 'starter' | 'pro' | 'enterprise' | 'pay_per_project' | 'cancelled';
+export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'cancelled' | 'unpaid' | 'paused';
+
+export interface UserSubscription {
+  id: string;
+  user_id: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  stripe_price_id: string | null;
+  plan_tier: PlanTier;
+  subscription_status: SubscriptionStatus;
+  trial_ends_at: string | null;
+  trial_used: boolean;
+  current_period_end: string | null;
+  project_id: string | null;
+  project_access_expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanFeatures {
+  maxProjects: number | 'unlimited';
+  maxDeals: number | 'unlimited';
+  maxLIHTCChecklists: number | 'unlimited';
+  maxTeamMembers: number | 'unlimited';
+  maxStorageGB: number | 'unlimited';
+  zoningLookup: boolean;
+  dealPipeline: boolean;
+  taxCreditAnalysis: boolean;
+  pilotAnalysis: boolean;
+  hudHomeGuide: boolean;
+  ffiecMaps: boolean;
+  taskNotifications: boolean;
+  customReports: boolean;
+  apiAccess: boolean;
+  dedicatedManager: boolean;
+  phoneSupport: boolean;
+}

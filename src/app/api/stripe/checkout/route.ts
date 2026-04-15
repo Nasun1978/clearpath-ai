@@ -1,59 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { getUserFromRequest } from "@/lib/supabase";
 
 // POST /api/stripe/checkout
-// Creates a Checkout Session for a one-time platform access payment.
-// Returns { url } — the redirect URL for the Stripe-hosted checkout page.
+// Creates a Stripe Checkout Session for subscriptions or one-time payments.
+// Body: { priceId: string, mode: 'subscription' | 'payment', isTrial?: boolean }
+// Returns: { url } — the Stripe-hosted checkout redirect URL.
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const body = (await req.json().catch(() => ({}))) as {
       priceId?: string;
+      mode?: "subscription" | "payment";
+      isTrial?: boolean;
     };
 
-    // Derive absolute base URL from the request so this works on any environment
-    // (localhost, preview deployments, production) without extra config.
+    if (!body.priceId) {
+      return NextResponse.json({ error: "priceId is required" }, { status: 400 });
+    }
+
+    const mode = body.mode ?? "subscription";
+
+    // Derive absolute base URL so this works on localhost, preview deploys, and production
     const origin =
       process.env.NEXT_PUBLIC_APP_URL ??
       `${req.nextUrl.protocol}//${req.nextUrl.host}`;
 
-    // If a specific priceId is passed (e.g. from a pricing table), use it.
-    // Otherwise fall back to the default product defined at deploy time.
-    const lineItems =
-      body.priceId
-        ? [{ price: body.priceId, quantity: 1 }]
-        : [
-            {
-              price_data: {
-                currency: "usd",
-                // $20.00 one-time access fee — adjust in the Dashboard or via env
-                unit_amount: parseInt(
-                  process.env.STRIPE_PRODUCT_PRICE_CENTS ?? "2000",
-                  10
-                ),
-                product_data: {
-                  name:
-                    process.env.STRIPE_PRODUCT_NAME ??
-                    "ClearPath AI — Platform Access",
-                  description:
-                    "One-time access to ClearPath AI affordable housing compliance platform.",
-                },
-              },
-              quantity: 1,
-            },
-          ];
+    // Attempt to get the authenticated user so we can pre-fill their email.
+    // If they're not logged in we still allow checkout (they'll be asked to sign up after).
+    const { user } = await getUserFromRequest(req);
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items: lineItems,
-      // Dynamic payment methods — Stripe automatically shows wallets, BNPL, etc.
-      // based on the customer's location and preferences (no payment_method_types needed).
+    const baseParams: Parameters<typeof stripe.checkout.sessions.create>[0] = {
+      mode,
+      line_items: [{ price: body.priceId, quantity: 1 }],
       success_url: `${origin}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/dashboard?checkout=cancelled`,
+      cancel_url:  `${origin}/pricing?checkout=cancelled`,
       // Surface billing address for tax purposes
       billing_address_collection: "auto",
-      // Allow promotional codes entered at checkout
-      allow_promotion_codes: true,
-    });
+    };
+
+    // Pre-fill customer email when the user is authenticated
+    if (user?.email) {
+      baseParams.customer_email = user.email;
+    }
+
+    if (mode === "subscription") {
+      baseParams.allow_promotion_codes = true;
+
+      if (body.isTrial) {
+        // 14-day free trial — no credit card required at signup.
+        // payment_method_collection: 'if_required' means Stripe won't mandate
+        // card entry for $0 trial sessions, improving conversion.
+        baseParams.subscription_data = { trial_period_days: 14 };
+        baseParams.payment_method_collection = "if_required";
+      }
+    }
+
+    const session = await stripe.checkout.sessions.create(baseParams);
 
     if (!session.url) {
       return NextResponse.json(

@@ -38,9 +38,9 @@ const SERVICES: ServiceConfig[] = [
     price: "$2,500",
     priceSubtext: "one-time",
     description:
-      "Full project onboarding — document review, timeline planning, team coordination, and setup inside ClearPath AI.",
+      "Full project onboarding — document review, timeline planning, team coordination, and setup inside RipeSpot.",
     bullets: [
-      "Full project setup in ClearPath AI",
+      "Full project setup in RipeSpot",
       "Document review & gap analysis",
       "LIHTC checklist configuration",
       "60-day kickoff timeline",
@@ -137,7 +137,7 @@ export default function ConsultingPage() {
       <header className="border-b border-slate-800 bg-[#080E1A]/90 backdrop-blur-sm sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/dashboard" className="text-xl font-bold font-serif tracking-tight text-white hover:text-teal-300 transition-colors">
-            ClearPath AI
+            RipeSpot
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/pricing" className="text-sm text-slate-400 hover:text-white transition-colors">
@@ -208,7 +208,7 @@ export default function ConsultingPage() {
             Need something custom? We work with government agencies, syndicators, and large development teams on bespoke engagements.
           </p>
           <a
-            href="mailto:hello@clearpathai.com?subject=Custom%20Consulting%20Inquiry"
+            href="mailto:hello@ripespot.com?subject=Custom%20Consulting%20Inquiry"
             className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 transition-colors font-semibold text-sm"
           >
             Contact us for custom pricing →

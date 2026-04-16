@@ -1,5 +1,5 @@
 -- =============================================================================
--- ClearPath AI — Stripe Billing Migration
+-- RipeSpot — Stripe Billing Migration
 -- Run in Supabase SQL Editor. Idempotent — safe to re-run.
 -- =============================================================================
 

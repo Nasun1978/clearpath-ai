@@ -109,7 +109,7 @@ async function geocodeWithNola(address: string): Promise<GeoPoint | null> {
 async function geocodeWithNominatim(address: string): Promise<GeoPoint | null> {
   const params = new URLSearchParams({ q: address, format: "json", limit: "1" });
   const res = await fetch(`${NOMINATIM_URL}?${params}`, {
-    headers: { "User-Agent": "ClearPathAI/1.0" },
+    headers: { "User-Agent": "RipeSpot/1.0" },
   });
   if (!res.ok) return null;
   const data = await res.json();

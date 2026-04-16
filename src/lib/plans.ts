@@ -1,5 +1,5 @@
 // =============================================================================
-// ClearPath AI — Plan Definitions & Feature Gating
+// RipeSpot — Plan Definitions & Feature Gating
 // =============================================================================
 // Single source of truth for plan tiers, Stripe price IDs, and feature access.
 // Price IDs are set after running /api/stripe/products-seed in development.

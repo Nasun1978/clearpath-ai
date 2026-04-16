@@ -33,7 +33,7 @@ export default function AdminPage() {
             </Link>
             <h1 className="text-lg font-bold">
               <span className="text-red-400">Admin</span>
-              <span className="text-slate-500 text-sm font-normal ml-2">admin@clearpath.ai only</span>
+              <span className="text-slate-500 text-sm font-normal ml-2">admin@ripespot.com only</span>
             </h1>
           </div>
         </div>
@@ -47,7 +47,7 @@ export default function AdminPage() {
         {error && (
           <div className="p-4 bg-red-900/20 border border-red-700/40 rounded-xl text-red-300 text-sm">
             {error === "Forbidden"
-              ? "Access denied. This page is restricted to admin@clearpath.ai."
+              ? "Access denied. This page is restricted to admin@ripespot.com."
               : error}
           </div>
         )}

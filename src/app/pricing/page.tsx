@@ -111,7 +111,7 @@ export default function PricingPage() {
 
   async function startCheckout(priceId: string, isEnterprise: boolean) {
     if (isEnterprise) {
-      window.location.href = "mailto:hello@clearpathai.com?subject=ClearPath%20AI%20Enterprise%20Inquiry";
+      window.location.href = "mailto:hello@ripespot.com?subject=RipeSpot%20Enterprise%20Inquiry";
       return;
     }
 
@@ -144,7 +144,7 @@ export default function PricingPage() {
       <header className="border-b border-slate-800 bg-[#080E1A]/90 backdrop-blur-sm sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/dashboard" className="text-xl font-bold font-serif tracking-tight text-white hover:text-teal-300 transition-colors">
-            ClearPath AI
+            RipeSpot
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/consulting" className="text-sm text-slate-400 hover:text-white transition-colors">
@@ -339,7 +339,7 @@ export default function PricingPage() {
             Nonprofit organizations and government agencies may be eligible for discounted pricing.
           </p>
           <a
-            href="mailto:hello@clearpathai.com?subject=Nonprofit%20%2F%20Government%20Discount%20Inquiry"
+            href="mailto:hello@ripespot.com?subject=Nonprofit%20%2F%20Government%20Discount%20Inquiry"
             className="text-teal-400 hover:text-teal-300 transition-colors"
           >
             Contact us to learn more →

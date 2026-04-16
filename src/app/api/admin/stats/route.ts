@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest, createServerClient } from "@/lib/supabase";
 
-const ADMIN_EMAIL = "admin@clearpath.ai";
+const ADMIN_EMAIL = "admin@ripespot.com";
 
 export interface AdminUserRow {
   id: string;
@@ -23,7 +23,7 @@ export interface AdminStatsResponse {
 }
 
 // GET /api/admin/stats — aggregate stats across all users.
-// Restricted to admin@clearpath.ai only; uses service role to bypass RLS.
+// Restricted to admin@ripespot.com only; uses service role to bypass RLS.
 export async function GET(request: NextRequest) {
   const { user } = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

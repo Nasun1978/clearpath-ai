@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 
 // GET /api/stripe/products-seed
-// Development-only route that creates all ClearPath AI Stripe products and prices.
+// Development-only route that creates all RipeSpot Stripe products and prices.
 // Uses idempotency keys on every creation call so re-running is safe.
 // Returns a JSON object you can paste directly into .env.local.
 export async function GET(): Promise<NextResponse> {
@@ -55,9 +55,9 @@ export async function GET(): Promise<NextResponse> {
     // -------------------------------------------------------------------------
     // Subscription plans
     // -------------------------------------------------------------------------
-    const starterProduct    = await createProduct("ClearPath AI — Starter",    { plan: "starter" });
-    const proProduct        = await createProduct("ClearPath AI — Pro",         { plan: "pro" });
-    const enterpriseProduct = await createProduct("ClearPath AI — Enterprise",  { plan: "enterprise" });
+    const starterProduct    = await createProduct("RipeSpot — Starter",    { plan: "starter" });
+    const proProduct        = await createProduct("RipeSpot — Pro",         { plan: "pro" });
+    const enterpriseProduct = await createProduct("RipeSpot — Enterprise",  { plan: "enterprise" });
 
     const [
       starterMonthly,
@@ -78,17 +78,17 @@ export async function GET(): Promise<NextResponse> {
     // -------------------------------------------------------------------------
     // Pay-Per-Project (one-time)
     // -------------------------------------------------------------------------
-    const payPerProjectProduct = await createProduct("ClearPath AI — Pay-Per-Project", { plan: "pay_per_project" });
+    const payPerProjectProduct = await createProduct("RipeSpot — Pay-Per-Project", { plan: "pay_per_project" });
     const payPerProject = await createPrice(payPerProjectProduct.id, 9900, "usd", null, "pay-per-project");
 
     // -------------------------------------------------------------------------
     // Consulting / Advisory services
     // -------------------------------------------------------------------------
-    const strategyProduct    = await createProduct("ClearPath AI — Strategy Session",          { service: "consulting" });
-    const launchProduct      = await createProduct("ClearPath AI — Project Launch Package",    { service: "consulting" });
-    const lihtcSupportProduct= await createProduct("ClearPath AI — LIHTC Application Support", { service: "consulting" });
-    const monthlyAdvisory    = await createProduct("ClearPath AI — Monthly Advisory Retainer",  { service: "advisory" });
-    const govAdvisory        = await createProduct("ClearPath AI — Government Agency Advisory", { service: "advisory" });
+    const strategyProduct    = await createProduct("RipeSpot — Strategy Session",          { service: "consulting" });
+    const launchProduct      = await createProduct("RipeSpot — Project Launch Package",    { service: "consulting" });
+    const lihtcSupportProduct= await createProduct("RipeSpot — LIHTC Application Support", { service: "consulting" });
+    const monthlyAdvisory    = await createProduct("RipeSpot — Monthly Advisory Retainer",  { service: "advisory" });
+    const govAdvisory        = await createProduct("RipeSpot — Government Agency Advisory", { service: "advisory" });
 
     const [
       strategyPrice,

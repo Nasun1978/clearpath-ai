@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ClearPath AI — Stripe Product & Price Seeder
+ * RipeSpot — Stripe Product & Price Seeder
  *
  * Creates all subscription plans, one-time purchases, and consulting services
  * in your Stripe account, then prints the price IDs to paste into .env.local.
@@ -57,9 +57,9 @@ const stripe = new Stripe(secretKey, { apiVersion: '2026-03-25.dahlia' });
 const PRODUCTS = [
   {
     key:         'starter',
-    name:        'ClearPath AI — Starter',
+    name:        'RipeSpot — Starter',
     description: 'Up to 3 active projects, zoning lookup, deal pipeline (25 deals), LIHTC checklist (1 active), 5 team members per project.',
-    metadata:    { plan: 'starter', clearpath_product: 'true' },
+    metadata:    { plan: 'starter', ripespot_product: 'true' },
     prices: [
       { key: 'starter_monthly', nickname: 'Starter Monthly', amount: 4900,  currency: 'usd', recurring: { interval: 'month' } },
       { key: 'starter_annual',  nickname: 'Starter Annual',  amount: 49000, currency: 'usd', recurring: { interval: 'year'  } },
@@ -67,9 +67,9 @@ const PRODUCTS = [
   },
   {
     key:         'pro',
-    name:        'ClearPath AI — Pro',
+    name:        'RipeSpot — Pro',
     description: 'Unlimited projects, deals, and checklists. Tax credit financial analysis, PILOT analysis, 10GB document storage, priority support.',
-    metadata:    { plan: 'pro', clearpath_product: 'true' },
+    metadata:    { plan: 'pro', ripespot_product: 'true' },
     prices: [
       { key: 'pro_monthly', nickname: 'Pro Monthly', amount: 14900,  currency: 'usd', recurring: { interval: 'month' } },
       { key: 'pro_annual',  nickname: 'Pro Annual',  amount: 149000, currency: 'usd', recurring: { interval: 'year'  } },
@@ -77,9 +77,9 @@ const PRODUCTS = [
   },
   {
     key:         'enterprise',
-    name:        'ClearPath AI — Enterprise',
+    name:        'RipeSpot — Enterprise',
     description: 'Everything in Pro plus unlimited storage, 10 user seats, custom branded reports, API access, dedicated account manager, phone support.',
-    metadata:    { plan: 'enterprise', clearpath_product: 'true' },
+    metadata:    { plan: 'enterprise', ripespot_product: 'true' },
     prices: [
       { key: 'enterprise_monthly', nickname: 'Enterprise Monthly', amount: 39900,  currency: 'usd', recurring: { interval: 'month' } },
       { key: 'enterprise_annual',  nickname: 'Enterprise Annual',  amount: 399000, currency: 'usd', recurring: { interval: 'year'  } },
@@ -87,9 +87,9 @@ const PRODUCTS = [
   },
   {
     key:         'pay_per_project',
-    name:        'ClearPath AI — Pay-Per-Project',
+    name:        'RipeSpot — Pay-Per-Project',
     description: 'Single project with full Pro-tier access for 90 days. No subscription required.',
-    metadata:    { plan: 'pay_per_project', clearpath_product: 'true' },
+    metadata:    { plan: 'pay_per_project', ripespot_product: 'true' },
     prices: [
       { key: 'pay_per_project', nickname: 'Pay-Per-Project (90 days)', amount: 9900, currency: 'usd' },
     ],
@@ -97,45 +97,45 @@ const PRODUCTS = [
   // --- Consulting services ---
   {
     key:         'strategy_session',
-    name:        'ClearPath AI — Strategy Session',
+    name:        'RipeSpot — Strategy Session',
     description: '90-minute strategy session: project scoping, feasibility review, and affordable housing development roadmap.',
-    metadata:    { plan: 'consulting', service: 'strategy_session', clearpath_product: 'true' },
+    metadata:    { plan: 'consulting', service: 'strategy_session', ripespot_product: 'true' },
     prices: [
       { key: 'strategy_session', nickname: 'Strategy Session (90 min)', amount: 25000, currency: 'usd' },
     ],
   },
   {
     key:         'project_launch',
-    name:        'ClearPath AI — Project Launch Package',
+    name:        'RipeSpot — Project Launch Package',
     description: 'Full project setup: document review, compliance checklist configuration, timeline planning, and kickoff support.',
-    metadata:    { plan: 'consulting', service: 'project_launch', clearpath_product: 'true' },
+    metadata:    { plan: 'consulting', service: 'project_launch', ripespot_product: 'true' },
     prices: [
       { key: 'project_launch', nickname: 'Project Launch Package', amount: 250000, currency: 'usd' },
     ],
   },
   {
     key:         'lihtc_app_support',
-    name:        'ClearPath AI — LIHTC Application Support',
+    name:        'RipeSpot — LIHTC Application Support',
     description: 'End-to-end LIHTC application preparation, QAP compliance review, and submission support.',
-    metadata:    { plan: 'consulting', service: 'lihtc_app_support', clearpath_product: 'true' },
+    metadata:    { plan: 'consulting', service: 'lihtc_app_support', ripespot_product: 'true' },
     prices: [
       { key: 'lihtc_app_support', nickname: 'LIHTC Application Support', amount: 750000, currency: 'usd' },
     ],
   },
   {
     key:         'monthly_advisory',
-    name:        'ClearPath AI — Monthly Advisory Retainer',
+    name:        'RipeSpot — Monthly Advisory Retainer',
     description: 'Ongoing expert guidance for affordable housing developers — monthly retainer.',
-    metadata:    { plan: 'consulting', service: 'monthly_advisory', clearpath_product: 'true' },
+    metadata:    { plan: 'consulting', service: 'monthly_advisory', ripespot_product: 'true' },
     prices: [
       { key: 'monthly_advisory', nickname: 'Monthly Advisory Retainer', amount: 150000, currency: 'usd', recurring: { interval: 'month' } },
     ],
   },
   {
     key:         'government_advisory',
-    name:        'ClearPath AI — Government Agency Advisory',
+    name:        'RipeSpot — Government Agency Advisory',
     description: 'Dedicated compliance and program support for housing authorities and government agencies — monthly retainer.',
-    metadata:    { plan: 'consulting', service: 'government_advisory', clearpath_product: 'true' },
+    metadata:    { plan: 'consulting', service: 'government_advisory', ripespot_product: 'true' },
     prices: [
       { key: 'government_advisory', nickname: 'Government Agency Advisory', amount: 500000, currency: 'usd', recurring: { interval: 'month' } },
     ],
@@ -148,7 +148,7 @@ const PRODUCTS = [
 async function findExistingProduct(key) {
   // Search by metadata key so re-runs don't create duplicates
   const list = await stripe.products.search({
-    query: `metadata['clearpath_product']:'true' AND metadata['plan']:'${key}'`,
+    query: `metadata['ripespot_product']:'true' AND metadata['plan']:'${key}'`,
     limit: 1,
   });
   return list.data[0] ?? null;
@@ -166,7 +166,7 @@ async function upsertProduct(def) {
     // Consulting products share plan:'consulting' metadata — search by service key too
     if (def.metadata.service) {
       const list = await stripe.products.search({
-        query: `metadata['service']:'${def.metadata.service}' AND metadata['clearpath_product']:'true'`,
+        query: `metadata['service']:'${def.metadata.service}' AND metadata['ripespot_product']:'true'`,
         limit: 1,
       });
       existing = list.data[0] ?? null;
@@ -180,7 +180,7 @@ async function upsertProduct(def) {
 
   const product = await stripe.products.create(
     { name: def.name, description: def.description, metadata: def.metadata },
-    { idempotencyKey: `clearpath-product-${def.key}` }
+    { idempotencyKey: `ripespot-product-${def.key}` }
   );
   process.stdout.write(`  ✓  Created product: ${product.id}  (${def.name})\n`);
   return product;
@@ -198,13 +198,13 @@ async function upsertPrice(productId, priceDef) {
     currency:   priceDef.currency,
     unit_amount: priceDef.amount,
     nickname:   priceDef.nickname,
-    metadata:   { clearpath_price: 'true', price_key: priceDef.key },
+    metadata:   { ripespot_price: 'true', price_key: priceDef.key },
   };
   if (priceDef.recurring) params.recurring = priceDef.recurring;
 
   const price = await stripe.prices.create(
     params,
-    { idempotencyKey: `clearpath-price-${priceDef.key}` }
+    { idempotencyKey: `ripespot-price-${priceDef.key}` }
   );
   process.stdout.write(`     ✓  Created price:   ${price.id}  (${priceDef.nickname}: $${(priceDef.amount / 100).toFixed(2)})\n`);
   return { key: priceDef.key, priceId: price.id };
@@ -214,7 +214,7 @@ async function upsertPrice(productId, priceDef) {
 // Main
 // ---------------------------------------------------------------------------
 async function main() {
-  console.log('\n🚀  ClearPath AI — Stripe Product Seeder');
+  console.log('\n🚀  RipeSpot — Stripe Product Seeder');
   console.log('━'.repeat(60));
   console.log(`   Using key: ${secretKey.slice(0, 12)}...`);
   console.log('━'.repeat(60) + '\n');

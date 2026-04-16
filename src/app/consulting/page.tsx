@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { STRIPE_PRICE_IDS } from "@/lib/plans";
 
+// planKey values must match keys in STRIPE_PRICE_IDS (src/lib/plans.ts).
+// Price IDs are resolved server-side so we never need NEXT_PUBLIC_ env vars here.
 interface ServiceConfig {
   name: string;
   price: string;
   priceSubtext: string;
   description: string;
   bullets: string[];
-  priceId: string;
+  planKey: string;
   mode: "payment" | "subscription";
   icon: string;
 }
@@ -28,7 +29,7 @@ const SERVICES: ServiceConfig[] = [
       "Program selection guidance (LIHTC, HOME, HTF, CDBG)",
       "Written summary of findings",
     ],
-    priceId: STRIPE_PRICE_IDS.strategy_session,
+    planKey: "strategy_session",
     mode: "payment",
     icon: "🎯",
   },
@@ -45,7 +46,7 @@ const SERVICES: ServiceConfig[] = [
       "60-day kickoff timeline",
       "Stakeholder coordination support",
     ],
-    priceId: STRIPE_PRICE_IDS.project_launch,
+    planKey: "project_launch",
     mode: "payment",
     icon: "🚀",
   },
@@ -62,7 +63,7 @@ const SERVICES: ServiceConfig[] = [
       "Deficiency response support",
       "Final submission review",
     ],
-    priceId: STRIPE_PRICE_IDS.lihtc_app_support,
+    planKey: "lihtc_app_support",
     mode: "payment",
     icon: "📋",
   },
@@ -79,7 +80,7 @@ const SERVICES: ServiceConfig[] = [
       "Regulatory change alerts",
       "Cancel anytime",
     ],
-    priceId: STRIPE_PRICE_IDS.monthly_advisory,
+    planKey: "monthly_advisory",
     mode: "subscription",
     icon: "📅",
   },
@@ -96,27 +97,22 @@ const SERVICES: ServiceConfig[] = [
       "Regulatory compliance guidance",
       "Custom reporting and dashboards",
     ],
-    priceId: STRIPE_PRICE_IDS.government_advisory,
+    planKey: "government_advisory",
     mode: "subscription",
     icon: "🏛️",
   },
 ];
 
 export default function ConsultingPage() {
-  const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
 
   async function bookService(service: ServiceConfig) {
-    if (!service.priceId) {
-      console.warn("Price ID not configured — run /api/stripe/products-seed in development");
-      return;
-    }
-
-    setLoadingPriceId(service.priceId);
+    setLoadingKey(service.planKey);
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId: service.priceId, mode: service.mode }),
+        body: JSON.stringify({ planKey: service.planKey, mode: service.mode }),
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (data.url) {
@@ -125,7 +121,7 @@ export default function ConsultingPage() {
         console.error("Checkout error:", data.error);
       }
     } finally {
-      setLoadingPriceId(null);
+      setLoadingKey(null);
     }
   }
 
@@ -163,7 +159,7 @@ export default function ConsultingPage() {
         {/* Services grid — 2 columns on md, 3 on lg */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
           {SERVICES.map((service) => {
-            const isLoading = loadingPriceId === service.priceId;
+            const isLoading = loadingKey === service.planKey;
             return (
               <div
                 key={service.name}

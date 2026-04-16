@@ -1,21 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { STRIPE_PRICE_IDS } from "@/lib/plans";
 import { getUserFromRequest } from "@/lib/supabase";
 
 // POST /api/stripe/checkout
 // Creates a Stripe Checkout Session for subscriptions or one-time payments.
-// Body: { priceId: string, mode: 'subscription' | 'payment', isTrial?: boolean }
+// Body: { planKey: string, mode: 'subscription' | 'payment', isTrial?: boolean }
+//   planKey must match a key in STRIPE_PRICE_IDS (e.g. 'pro_monthly', 'strategy_session').
+//   Price IDs are resolved server-side so they never need to be exposed to the browser.
 // Returns: { url } — the Stripe-hosted checkout redirect URL.
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const body = (await req.json().catch(() => ({}))) as {
-      priceId?: string;
+      planKey?: string;
       mode?: "subscription" | "payment";
       isTrial?: boolean;
     };
 
-    if (!body.priceId) {
-      return NextResponse.json({ error: "priceId is required" }, { status: 400 });
+    if (!body.planKey) {
+      return NextResponse.json({ error: "planKey is required" }, { status: 400 });
+    }
+
+    // Resolve the Stripe price ID server-side — env vars without NEXT_PUBLIC_ prefix
+    // are only available on the server, so the client just passes the plan key name.
+    const priceId = STRIPE_PRICE_IDS[body.planKey as keyof typeof STRIPE_PRICE_IDS];
+    if (!priceId) {
+      return NextResponse.json(
+        { error: `Unknown planKey: ${body.planKey}` },
+        { status: 400 }
+      );
     }
 
     const mode = body.mode ?? "subscription";
@@ -31,7 +44,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const baseParams: Parameters<typeof stripe.checkout.sessions.create>[0] = {
       mode,
-      line_items: [{ price: body.priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:  `${origin}/pricing?checkout=cancelled`,
       // Surface billing address for tax purposes

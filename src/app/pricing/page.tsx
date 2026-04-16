@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { STRIPE_PRICE_IDS } from "@/lib/plans";
 
+// Plan keys must match keys in STRIPE_PRICE_IDS on the server (src/lib/plans.ts).
+// We never import STRIPE_PRICE_IDS here — env vars without NEXT_PUBLIC_ prefix
+// are undefined in the browser, so price IDs are resolved server-side in the API route.
 interface PlanConfig {
   name: string;
   monthlyPrice: number;
@@ -12,8 +13,8 @@ interface PlanConfig {
   description: string;
   features: string[];
   notIncluded: string[];
-  monthlyPriceId: string;
-  annualPriceId: string;
+  monthlyPlanKey: string;
+  annualPlanKey: string;
   isPopular: boolean;
   ctaLabel: string;
   isEnterprise: boolean;
@@ -43,8 +44,8 @@ const PLANS: PlanConfig[] = [
       "Custom reports",
       "API access",
     ],
-    monthlyPriceId: STRIPE_PRICE_IDS.starter_monthly,
-    annualPriceId:  STRIPE_PRICE_IDS.starter_annual,
+    monthlyPlanKey: "starter_monthly",
+    annualPlanKey:  "starter_annual",
     isPopular:      false,
     ctaLabel:       "Start Free Trial",
     isEnterprise:   false,
@@ -73,8 +74,8 @@ const PLANS: PlanConfig[] = [
       "API access",
       "Dedicated account manager",
     ],
-    monthlyPriceId: STRIPE_PRICE_IDS.pro_monthly,
-    annualPriceId:  STRIPE_PRICE_IDS.pro_annual,
+    monthlyPlanKey: "pro_monthly",
+    annualPlanKey:  "pro_annual",
     isPopular:      true,
     ctaLabel:       "Start Free Trial",
     isEnterprise:   false,
@@ -96,45 +97,55 @@ const PLANS: PlanConfig[] = [
       "SLA guarantees",
     ],
     notIncluded: [],
-    monthlyPriceId: STRIPE_PRICE_IDS.enterprise_monthly,
-    annualPriceId:  STRIPE_PRICE_IDS.enterprise_annual,
+    monthlyPlanKey: "enterprise_monthly",
+    annualPlanKey:  "enterprise_annual",
     isPopular:      false,
     ctaLabel:       "Contact Sales",
     isEnterprise:   true,
   },
 ];
 
+async function startCheckout(
+  planKey: string,
+  mode: "subscription" | "payment",
+  isTrial = false
+): Promise<void> {
+  const res = await fetch("/api/stripe/checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ planKey, mode, isTrial }),
+  });
+  const data = (await res.json()) as { url?: string; error?: string };
+  if (data.url) {
+    window.location.href = data.url;
+  } else {
+    console.error("Checkout error:", data.error);
+  }
+}
+
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
-  const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
-  const router = useRouter();
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
 
-  async function startCheckout(priceId: string, isEnterprise: boolean) {
+  async function handlePlanClick(planKey: string, isEnterprise: boolean) {
     if (isEnterprise) {
       window.location.href = "mailto:hello@ripespot.com?subject=RipeSpot%20Enterprise%20Inquiry";
       return;
     }
-
-    if (!priceId) {
-      console.warn("Price ID not configured yet — run /api/stripe/products-seed in development");
-      return;
-    }
-
-    setLoadingPriceId(priceId);
+    setLoadingKey(planKey);
     try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId, mode: "subscription", isTrial: true }),
-      });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        console.error("Checkout error:", data.error);
-      }
+      await startCheckout(planKey, "subscription", true);
     } finally {
-      setLoadingPriceId(null);
+      setLoadingKey(null);
+    }
+  }
+
+  async function handlePayPerProject() {
+    setLoadingKey("pay_per_project");
+    try {
+      await startCheckout("pay_per_project", "payment");
+    } finally {
+      setLoadingKey(null);
     }
   }
 
@@ -208,11 +219,11 @@ export default function PricingPage() {
         {/* Plan cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
           {PLANS.map((plan) => {
-            const priceId = isAnnual ? plan.annualPriceId : plan.monthlyPriceId;
+            const planKey = isAnnual ? plan.annualPlanKey : plan.monthlyPlanKey;
             const displayPrice = isAnnual
               ? Math.round(plan.annualPrice / 12)
               : plan.monthlyPrice;
-            const isLoading = loadingPriceId === priceId;
+            const isLoading = loadingKey === planKey;
 
             return (
               <div
@@ -252,7 +263,7 @@ export default function PricingPage() {
                 </div>
 
                 <button
-                  onClick={() => startCheckout(priceId, plan.isEnterprise)}
+                  onClick={() => handlePlanClick(planKey, plan.isEnterprise)}
                   disabled={isLoading}
                   className={`w-full py-2.5 rounded-lg text-sm font-semibold mb-6 transition-colors ${
                     plan.isPopular || plan.isEnterprise
@@ -309,26 +320,11 @@ export default function PricingPage() {
               ))}
             </ul>
             <button
-              onClick={async () => {
-                const priceId = STRIPE_PRICE_IDS.pay_per_project;
-                if (!priceId) return;
-                setLoadingPriceId(priceId);
-                try {
-                  const res = await fetch("/api/stripe/checkout", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ priceId, mode: "payment" }),
-                  });
-                  const data = (await res.json()) as { url?: string };
-                  if (data.url) window.location.href = data.url;
-                } finally {
-                  setLoadingPriceId(null);
-                }
-              }}
-              disabled={loadingPriceId === STRIPE_PRICE_IDS.pay_per_project}
+              onClick={handlePayPerProject}
+              disabled={loadingKey === "pay_per_project"}
               className="px-8 py-2.5 rounded-lg text-sm font-semibold bg-teal-600 hover:bg-teal-500 text-white transition-colors disabled:opacity-60"
             >
-              {loadingPriceId === STRIPE_PRICE_IDS.pay_per_project ? "Loading…" : "Purchase Project Access"}
+              {loadingKey === "pay_per_project" ? "Loading…" : "Purchase Project Access"}
             </button>
           </div>
         </div>

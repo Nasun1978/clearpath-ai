@@ -8,21 +8,23 @@
 import type { PlanTier, PlanFeatures } from '@/types';
 
 // Stripe Price IDs — set in .env.local after running the seed script.
-// Each key maps to an environment variable; falls back to '' if unset.
+// Trim each value to guard against trailing newlines from copy-paste into Vercel dashboard.
+const e = (v: string | undefined) => (v ?? '').trim();
+
 export const STRIPE_PRICE_IDS = {
-  starter_monthly:      process.env.STRIPE_PRICE_STARTER_MONTHLY      ?? '',
-  starter_annual:       process.env.STRIPE_PRICE_STARTER_ANNUAL        ?? '',
-  pro_monthly:          process.env.STRIPE_PRICE_PRO_MONTHLY           ?? '',
-  pro_annual:           process.env.STRIPE_PRICE_PRO_ANNUAL            ?? '',
-  enterprise_monthly:   process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY    ?? '',
-  enterprise_annual:    process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL     ?? '',
-  pay_per_project:      process.env.STRIPE_PRICE_PAY_PER_PROJECT       ?? '',
+  starter_monthly:      e(process.env.STRIPE_PRICE_STARTER_MONTHLY),
+  starter_annual:       e(process.env.STRIPE_PRICE_STARTER_ANNUAL),
+  pro_monthly:          e(process.env.STRIPE_PRICE_PRO_MONTHLY),
+  pro_annual:           e(process.env.STRIPE_PRICE_PRO_ANNUAL),
+  enterprise_monthly:   e(process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY),
+  enterprise_annual:    e(process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL),
+  pay_per_project:      e(process.env.STRIPE_PRICE_PAY_PER_PROJECT),
   // Consulting / one-time services
-  strategy_session:     process.env.STRIPE_PRICE_STRATEGY_SESSION      ?? '',
-  project_launch:       process.env.STRIPE_PRICE_PROJECT_LAUNCH        ?? '',
-  lihtc_app_support:    process.env.STRIPE_PRICE_LIHTC_APP_SUPPORT     ?? '',
-  monthly_advisory:     process.env.STRIPE_PRICE_MONTHLY_ADVISORY      ?? '',
-  government_advisory:  process.env.STRIPE_PRICE_GOVERNMENT_ADVISORY   ?? '',
+  strategy_session:     e(process.env.STRIPE_PRICE_STRATEGY_SESSION),
+  project_launch:       e(process.env.STRIPE_PRICE_PROJECT_LAUNCH),
+  lihtc_app_support:    e(process.env.STRIPE_PRICE_LIHTC_APP_SUPPORT),
+  monthly_advisory:     e(process.env.STRIPE_PRICE_MONTHLY_ADVISORY),
+  government_advisory:  e(process.env.STRIPE_PRICE_GOVERNMENT_ADVISORY),
 } as const;
 
 // Pro feature set — reused for trial and pay_per_project

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { STRIPE_PRICE_IDS } from "@/lib/plans";
 
 interface ServiceConfig {
@@ -105,7 +104,6 @@ const SERVICES: ServiceConfig[] = [
 
 export default function ConsultingPage() {
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
-  const router = useRouter();
 
   async function bookService(service: ServiceConfig) {
     if (!service.priceId) {
@@ -122,7 +120,7 @@ export default function ConsultingPage() {
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (data.url) {
-        router.push(data.url);
+        window.location.href = data.url;
       } else {
         console.error("Checkout error:", data.error);
       }

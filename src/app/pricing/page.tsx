@@ -129,7 +129,7 @@ export default function PricingPage() {
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (data.url) {
-        router.push(data.url);
+        window.location.href = data.url;
       } else {
         console.error("Checkout error:", data.error);
       }
@@ -320,7 +320,7 @@ export default function PricingPage() {
                     body: JSON.stringify({ priceId, mode: "payment" }),
                   });
                   const data = (await res.json()) as { url?: string };
-                  if (data.url) router.push(data.url);
+                  if (data.url) window.location.href = data.url;
                 } finally {
                   setLoadingPriceId(null);
                 }

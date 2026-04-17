@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest, createServerClient } from "@/lib/supabase";
 
-const ADMIN_EMAIL = "admin@ripespot.com";
+const ADMIN_EMAILS = [
+  "admin@ripespot.com",
+  "steven@ripespotdevelopment.com",
+  "stevenkennedy78@gmail.com",
+];
 
 export interface AdminUserRow {
   id: string;
@@ -27,7 +31,7 @@ export interface AdminStatsResponse {
 export async function GET(request: NextRequest) {
   const { user } = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (user.email !== ADMIN_EMAIL) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!user.email || !ADMIN_EMAILS.includes(user.email)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   try {
     // Service role client — bypasses RLS so we can see all rows across all users.

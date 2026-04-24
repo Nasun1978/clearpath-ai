@@ -2,15 +2,129 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import type { CompanyDocument, CompanyDocumentType } from "@/types";
-import { COMPANY_DOCUMENT_TYPES } from "@/types";
+
+// ── Folder structure definition ───────────────────────────────────────────────
+
+interface DocumentSubfolder {
+  path: string;
+  label: string;
+  description: string;
+}
+
+interface FolderGroupDef {
+  id: string;
+  label: string;
+  icon: string;
+  borderColor: string;
+  hoverBg: string;
+  accentText: string;
+  subfolders: DocumentSubfolder[];
+}
+
+const FOLDER_GROUPS: FolderGroupDef[] = [
+  {
+    id: "funding_sources",
+    label: "Funding Sources",
+    icon: "💰",
+    borderColor: "border-teal-800/60",
+    hoverBg: "hover:bg-teal-900/20",
+    accentText: "text-teal-400",
+    subfolders: [
+      { path: "funding_sources/tax_credit_application",  label: "Tax Credit Application",   description: "LIHTC allocation letters, 8609 forms, carryover docs" },
+      { path: "funding_sources/tax_exempt_bonds",         label: "Tax-Exempt Bonds",          description: "Bond documents, inducement resolutions, bond counsel opinions" },
+      { path: "funding_sources/home_funds",               label: "HOME Funds",                description: "HOME agreement, compliance docs, drawdown requests" },
+      { path: "funding_sources/housing_trust_fund",       label: "Housing Trust Fund",        description: "HTF application, award letter, reporting" },
+      { path: "funding_sources/pilot_agreement",          label: "PILOT Agreement",           description: "PILOT application, council resolution, annual certifications" },
+      { path: "funding_sources/project_based_vouchers",  label: "Project Based Vouchers",    description: "HAP contract, AHAP, PBV commitment letter" },
+      { path: "funding_sources/permanent_loan",           label: "Permanent Loan",            description: "Loan commitment, closing docs, promissory note" },
+      { path: "funding_sources/general_obligation_bonds", label: "General Obligation Bonds",  description: "GO bond authorization, draw schedule" },
+      { path: "funding_sources/other",                    label: "Other Funding Sources",     description: "Other funding source documentation" },
+    ],
+  },
+  {
+    id: "construction",
+    label: "Construction",
+    icon: "🏗️",
+    borderColor: "border-amber-800/60",
+    hoverBg: "hover:bg-amber-900/20",
+    accentText: "text-amber-400",
+    subfolders: [
+      { path: "construction/documents",      label: "Construction Documents", description: "Plans, specifications, drawings, as-builts" },
+      { path: "construction/contracts",      label: "Construction Contracts", description: "GC contract, schedule of values, change orders" },
+      { path: "construction/davis_bacon",    label: "Davis-Bacon Wages",      description: "Wage determinations, certified payroll, employee interviews" },
+      { path: "construction/dbe_mbe_wbe",    label: "DBE/MBE/WBE",           description: "DBE plan, certifications, utilization reports, good faith efforts" },
+      { path: "construction/building_permits", label: "Building Permits",     description: "Permit applications, approvals, inspections" },
+      { path: "construction/insurance",      label: "Insurance",              description: "Builder's risk, GL, workers comp certificates" },
+    ],
+  },
+  {
+    id: "third_party_vendors",
+    label: "Third Party Vendors",
+    icon: "🤝",
+    borderColor: "border-violet-800/60",
+    hoverBg: "hover:bg-violet-900/20",
+    accentText: "text-violet-400",
+    subfolders: [
+      { path: "third_party_vendors/architect",             label: "Architect",              description: "Design contract, drawings, specifications, AIA documents" },
+      { path: "third_party_vendors/engineer",              label: "Engineer",               description: "Civil, structural, MEP contracts and reports" },
+      { path: "third_party_vendors/accountant",            label: "Accountant/CPA",         description: "Audit engagement, cost certifications, tax returns" },
+      { path: "third_party_vendors/legal",                 label: "Legal/Attorney",         description: "Partnership agreement, title, closing docs, opinion letters" },
+      { path: "third_party_vendors/environmental",         label: "Environmental",          description: "Phase I, Phase II, asbestos/lead reports, remediation" },
+      { path: "third_party_vendors/appraiser",             label: "Appraiser",              description: "Appraisal report, market study" },
+      { path: "third_party_vendors/property_management",  label: "Property Management",    description: "Management agreement, policies, staffing plan" },
+      { path: "third_party_vendors/market_analyst",        label: "Market Analyst",         description: "Market study, demand analysis" },
+      { path: "third_party_vendors/surveyor",              label: "Surveyor",               description: "Survey, ALTA, boundary" },
+      { path: "third_party_vendors/title_company",         label: "Title Company",          description: "Title commitment, title policy, endorsements" },
+      { path: "third_party_vendors/tax_credit_syndicator", label: "Tax Credit Syndicator",  description: "Partnership agreement, investor docs, pay-in schedule" },
+      { path: "third_party_vendors/other",                 label: "Other Vendors",          description: "Other vendor documentation" },
+    ],
+  },
+  {
+    id: "company_documents",
+    label: "Company Documents",
+    icon: "🏢",
+    borderColor: "border-slate-700",
+    hoverBg: "hover:bg-slate-800/40",
+    accentText: "text-slate-400",
+    subfolders: [
+      { path: "company_documents/w9",                label: "W-9 Form",                   description: "IRS Request for Taxpayer Identification Number and Certification" },
+      { path: "company_documents/board_resolution",  label: "Board Resolution",            description: "Corporate authorization for transactions, signatories, or actions" },
+      { path: "company_documents/tax_clearance",     label: "Tax Clearance Certificate",   description: "State-issued proof of no outstanding tax liabilities" },
+      { path: "company_documents/affidavit_work_site", label: "Affidavit of Work Site",   description: "Sworn statement confirming work site location and conditions" },
+      { path: "company_documents/good_standing",     label: "Good Standing Certificate",   description: "Secretary of State confirmation that entity is active and compliant" },
+      { path: "company_documents/annual_inspection", label: "Annual Inspection Report",    description: "Property inspection results required by housing agencies" },
+      { path: "company_documents/rental_application", label: "Rental Application Template", description: "Standard application form used for prospective tenants" },
+      { path: "company_documents/tenant_documents",  label: "Tenant Documents",            description: "ID, income verification, and other tenant eligibility documents" },
+      { path: "company_documents/other",             label: "Other",                       description: "Other company documents" },
+    ],
+  },
+];
+
+// Map legacy document_type to folder_path for pre-migration documents
+function getEffectiveFolderPath(doc: CompanyDocument): string {
+  if (doc.folder_path) return doc.folder_path;
+  const map: Partial<Record<CompanyDocumentType, string>> = {
+    w9:                  "company_documents/w9",
+    board_resolution:    "company_documents/board_resolution",
+    tax_clearance:       "company_documents/tax_clearance",
+    affidavit_work_site: "company_documents/affidavit_work_site",
+    good_standing:       "company_documents/good_standing",
+    annual_inspection:   "company_documents/annual_inspection",
+    rental_application:  "company_documents/rental_application",
+    tenant_id:           "company_documents/tenant_documents",
+    tenant_income:       "company_documents/tenant_documents",
+    other:               "company_documents/other",
+  };
+  return map[doc.document_type] ?? "company_documents/other";
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fmtBytes(bytes: number | null): string {
   if (!bytes) return "—";
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1_048_576).toFixed(1)} MB`;
 }
 
 function fmtDate(iso: string): string {
@@ -23,46 +137,41 @@ function expiryStatus(expiresAt: string | null): ExpiryStatus {
   if (!expiresAt) return "none";
   const diff = new Date(expiresAt + "T23:59:59").getTime() - Date.now();
   if (diff < 0) return "expired";
-  if (diff < 30 * 24 * 60 * 60 * 1000) return "expiring_soon";
+  if (diff < 30 * 86_400_000) return "expiring_soon";
   return "ok";
 }
 
-function getMeta(type: CompanyDocumentType) {
-  return COMPANY_DOCUMENT_TYPES.find((t) => t.value === type) ?? COMPANY_DOCUMENT_TYPES.at(-1)!;
-}
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function TypeBadge({ type }: { type: CompanyDocumentType }) {
-  const meta = getMeta(type);
+function docMatchesSearch(doc: CompanyDocument, q: string): boolean {
+  if (!q.trim()) return true;
+  const lower = q.toLowerCase();
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-900/40 text-teal-300 border border-teal-800/50 whitespace-nowrap">
-      {meta.icon} {meta.label}
-    </span>
+    doc.document_name.toLowerCase().includes(lower) ||
+    (doc.notes ?? "").toLowerCase().includes(lower)
   );
 }
 
-function ExpiryBadge({ expiresAt }: { expiresAt: string | null }) {
-  const status = expiryStatus(expiresAt);
-  if (status === "none") return null;
-  if (status === "expired") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-900/40 text-red-300 border border-red-700/40">
-        ⚠ Expired {fmtDate(expiresAt!)}
-      </span>
-    );
-  }
-  if (status === "expiring_soon") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-900/40 text-amber-300 border border-amber-700/40">
-        ⏰ Expires {fmtDate(expiresAt!)}
-      </span>
-    );
-  }
+// ── Icons ─────────────────────────────────────────────────────────────────────
+
+function FileIcon({ className }: { className?: string }) {
   return (
-    <span className="text-[10px] text-slate-500">
-      Expires {fmtDate(expiresAt!)}
-    </span>
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  );
+}
+
+function FolderIcon({ open, className }: { open: boolean; className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      {open ? (
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+      ) : (
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M3 7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+      )}
+    </svg>
   );
 }
 
@@ -71,14 +180,16 @@ function ExpiryBadge({ expiresAt }: { expiresAt: string | null }) {
 interface UploadModalProps {
   onClose: () => void;
   onSuccess: (doc: CompanyDocument) => void;
-  defaultType?: CompanyDocumentType;
+  defaultFolderPath?: string;
+  defaultFile?: File;
 }
 
-function UploadModal({ onClose, onSuccess, defaultType }: UploadModalProps) {
-  const [file, setFile] = useState<File | null>(null);
+function UploadModal({ onClose, onSuccess, defaultFolderPath, defaultFile }: UploadModalProps) {
+  const defaultPath = defaultFolderPath ?? FOLDER_GROUPS[0].subfolders[0].path;
+  const [file, setFile] = useState<File | null>(defaultFile ?? null);
   const [dragging, setDragging] = useState(false);
-  const [docType, setDocType] = useState<CompanyDocumentType>(defaultType ?? "other");
-  const [docName, setDocName] = useState("");
+  const [folderPath, setFolderPath] = useState<string>(defaultPath);
+  const [docName, setDocName] = useState(defaultFile ? defaultFile.name.replace(/\.[^.]+$/, "") : "");
   const [expiresAt, setExpiresAt] = useState("");
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -88,7 +199,6 @@ function UploadModal({ onClose, onSuccess, defaultType }: UploadModalProps) {
 
   function handleFileChosen(f: File) {
     setFile(f);
-    // Pre-fill doc name from filename (strip extension)
     if (!docName) setDocName(f.name.replace(/\.[^.]+$/, ""));
   }
 
@@ -96,13 +206,10 @@ function UploadModal({ onClose, onSuccess, defaultType }: UploadModalProps) {
     e.preventDefault();
     if (!file) { setError("Please select a file"); return; }
     if (!docName.trim()) { setError("Document name is required"); return; }
-
     setUploading(true);
     setError(null);
     setProgress(10);
-
     try {
-      // Step 1: get signed upload URL
       const urlRes = await fetch("/api/documents/upload-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -112,7 +219,6 @@ function UploadModal({ onClose, onSuccess, defaultType }: UploadModalProps) {
       const { upload_url, file_path } = await urlRes.json() as { upload_url: string; file_path: string };
       setProgress(30);
 
-      // Step 2: PUT file directly to Supabase Storage via the signed URL
       const putRes = await fetch(upload_url, {
         method: "PUT",
         headers: { "Content-Type": file.type, "x-upsert": "true" },
@@ -121,24 +227,23 @@ function UploadModal({ onClose, onSuccess, defaultType }: UploadModalProps) {
       if (!putRes.ok) throw new Error(`Storage upload failed: ${putRes.statusText}`);
       setProgress(70);
 
-      // Step 3: create the DB record
       const docRes = await fetch("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          document_type: docType,
           document_name: docName.trim(),
           file_path,
-          file_url:   "",  // signed_url is generated at query time
-          file_size:  file.size,
+          file_url: "",
+          file_size: file.size,
           expires_at: expiresAt || null,
-          notes:      notes.trim() || null,
+          notes: notes.trim() || null,
+          folder_path: folderPath,
         }),
       });
       if (!docRes.ok) throw new Error((await docRes.json() as { error: string }).error);
-      const { document } = await docRes.json() as { document: CompanyDocument };
+      const { document: doc } = await docRes.json() as { document: CompanyDocument };
       setProgress(100);
-      onSuccess(document);
+      onSuccess(doc);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
       setProgress(0);
@@ -149,8 +254,8 @@ function UploadModal({ onClose, onSuccess, defaultType }: UploadModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg bg-[#0F1729] border border-slate-700 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+      <div className="w-full max-w-lg bg-[#0F1729] border border-slate-700 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 sticky top-0 bg-[#0F1729] z-10">
           <h2 className="font-bold text-white">Upload Document</h2>
           <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,16 +302,20 @@ function UploadModal({ onClose, onSuccess, defaultType }: UploadModalProps) {
             )}
           </div>
 
-          {/* Document type */}
+          {/* Folder picker */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1.5">Document Type</label>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5">Destination Folder</label>
             <select
-              value={docType}
-              onChange={(e) => setDocType(e.target.value as CompanyDocumentType)}
+              value={folderPath}
+              onChange={(e) => setFolderPath(e.target.value)}
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-600"
             >
-              {COMPANY_DOCUMENT_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
+              {FOLDER_GROUPS.map((g) => (
+                <optgroup key={g.id} label={g.label}>
+                  {g.subfolders.map((s) => (
+                    <option key={s.path} value={s.path}>{s.label}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </div>
@@ -215,10 +324,9 @@ function UploadModal({ onClose, onSuccess, defaultType }: UploadModalProps) {
           <div>
             <label className="block text-xs font-semibold text-slate-400 mb-1.5">Document Name</label>
             <input
-              type="text"
-              value={docName}
+              type="text" value={docName}
               onChange={(e) => setDocName(e.target.value)}
-              placeholder="e.g. Acme Housing W-9 2026"
+              placeholder="e.g. Allocation Letter 2026"
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-teal-600"
             />
           </div>
@@ -229,8 +337,7 @@ function UploadModal({ onClose, onSuccess, defaultType }: UploadModalProps) {
               Expiration Date <span className="text-slate-600 font-normal">(optional)</span>
             </label>
             <input
-              type="date"
-              value={expiresAt}
+              type="date" value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-600"
             />
@@ -242,24 +349,18 @@ function UploadModal({ onClose, onSuccess, defaultType }: UploadModalProps) {
               Notes <span className="text-slate-600 font-normal">(optional)</span>
             </label>
             <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              value={notes} onChange={(e) => setNotes(e.target.value)}
               rows={2}
               placeholder="Any notes about this document…"
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-teal-600 resize-none"
             />
           </div>
 
-          {/* Progress bar */}
           {uploading && (
             <div className="w-full bg-slate-800 rounded-full h-1.5">
-              <div
-                className="bg-teal-500 h-1.5 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
+              <div className="bg-teal-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
             </div>
           )}
-
           {error && (
             <p className="text-xs text-red-400 bg-red-900/20 border border-red-700/30 rounded-lg px-3 py-2">{error}</p>
           )}
@@ -284,9 +385,9 @@ function UploadModal({ onClose, onSuccess, defaultType }: UploadModalProps) {
   );
 }
 
-// ── Document Card ─────────────────────────────────────────────────────────────
+// ── Document Row ──────────────────────────────────────────────────────────────
 
-function DocumentCard({
+function DocumentRow({
   doc,
   onDelete,
 }: {
@@ -311,94 +412,257 @@ function DocumentCard({
     }
   }
 
-  const cardBorder =
-    status === "expired"       ? "border-red-700/40" :
-    status === "expiring_soon" ? "border-amber-700/40" :
-                                  "border-slate-800";
-
   return (
-    <div className={`bg-[#0F1729] border ${cardBorder} rounded-xl p-4 flex flex-col gap-3 hover:border-slate-700 transition-colors`}>
-      {/* Top row */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-white truncate">{doc.document_name}</p>
-          <p className="text-xs text-slate-500 mt-0.5">{fmtDate(doc.uploaded_at)}</p>
-        </div>
-        <div className="shrink-0 flex gap-1.5">
-          {/* Download */}
-          {doc.signed_url && (
-            <a
-              href={doc.signed_url}
-              download
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-teal-300 hover:bg-teal-900/30 transition-colors"
-              title="Download"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-            </a>
+    <div className={`flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800/50 transition-colors group ${
+      status === "expired"       ? "border-l-2 border-l-red-600/60 ml-px" :
+      status === "expiring_soon" ? "border-l-2 border-l-amber-600/60 ml-px" : ""
+    }`}>
+      <FileIcon className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-slate-200 truncate leading-snug">{doc.document_name}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-slate-600">{fmtBytes(doc.file_size)}</span>
+          <span className="text-slate-800 text-xs">·</span>
+          <span className="text-xs text-slate-600">{fmtDate(doc.uploaded_at)}</span>
+          {status === "expired" && (
+            <span className="text-xs text-red-400">· Expired {fmtDate(doc.expires_at!)}</span>
           )}
-          {/* Delete */}
-          <button
-            onClick={handleDelete} disabled={deleting}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-900/20 transition-colors disabled:opacity-40"
-            title="Delete"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+          {status === "expiring_soon" && (
+            <span className="text-xs text-amber-400">· Expires {fmtDate(doc.expires_at!)}</span>
+          )}
+          {doc.notes && (
+            <span className="text-xs text-slate-600 truncate max-w-[140px] italic" title={doc.notes}>{doc.notes}</span>
+          )}
         </div>
       </div>
 
-      {/* Badges row */}
-      <div className="flex flex-wrap gap-1.5 items-center">
-        <TypeBadge type={doc.document_type} />
-        <ExpiryBadge expiresAt={doc.expires_at} />
-      </div>
-
-      {/* Footer: file size + notes */}
-      <div className="flex items-center justify-between text-xs text-slate-500">
-        <span>{fmtBytes(doc.file_size)}</span>
-        {doc.notes && (
-          <span className="truncate max-w-[180px] italic" title={doc.notes}>{doc.notes}</span>
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        {doc.signed_url && (
+          <a
+            href={doc.signed_url}
+            download
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1.5 rounded text-slate-500 hover:text-teal-300 hover:bg-teal-900/30 transition-colors"
+            title="Download"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </a>
         )}
+        <button
+          onClick={handleDelete} disabled={deleting}
+          className="p-1.5 rounded text-slate-600 hover:text-red-400 hover:bg-red-900/20 transition-colors disabled:opacity-40"
+          title="Delete"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
       </div>
     </div>
   );
 }
 
-// ── Empty State ───────────────────────────────────────────────────────────────
+// ── Subfolder Row ─────────────────────────────────────────────────────────────
 
-function EmptyState({
-  type,
+function SubfolderRow({
+  subfolder,
+  docs,
   onUpload,
+  onDelete,
+  isOpen,
+  onToggle,
+  search,
 }: {
-  type: CompanyDocumentType | "all";
-  onUpload: () => void;
+  subfolder: DocumentSubfolder;
+  docs: CompanyDocument[];
+  onUpload: (folderPath: string, file?: File) => void;
+  onDelete: (id: string) => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  search: string;
 }) {
-  const meta = type !== "all" ? getMeta(type) : null;
+  const [dragOver, setDragOver] = useState(false);
+
+  const hasMatches = search.trim()
+    ? docs.some((d) => docMatchesSearch(d, search))
+    : false;
+  const effectiveIsOpen = (search.trim().length > 0 && hasMatches) || isOpen;
+
+  const visibleDocs = search.trim()
+    ? docs.filter((d) => docMatchesSearch(d, search))
+    : docs;
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const f = e.dataTransfer.files[0];
+    onUpload(subfolder.path, f ?? undefined);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false);
+  }
+
   return (
-    <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-      <div className="text-4xl mb-3">{meta?.icon ?? "📁"}</div>
-      <p className="text-slate-300 font-semibold mb-1">
-        {meta ? `No ${meta.label} documents yet` : "No documents yet"}
-      </p>
-      <p className="text-slate-500 text-sm max-w-sm mb-5">
-        {meta
-          ? meta.description
-          : "Upload your company's standard government-required documents here. They'll be organized by type and accessible from any project."}
-      </p>
-      <button
-        onClick={onUpload}
-        className="px-4 py-2 rounded-lg bg-teal-700 hover:bg-teal-600 text-white text-sm font-semibold transition-colors"
+    <div className="mb-px">
+      {/* Subfolder header */}
+      <div
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all group ${
+          dragOver
+            ? "bg-teal-900/30 ring-1 ring-teal-700/50"
+            : "hover:bg-slate-800/50"
+        }`}
+        onClick={onToggle}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
-        Upload your first document
+        <FolderIcon
+          open={effectiveIsOpen}
+          className="w-4 h-4 text-slate-500 shrink-0 group-hover:text-slate-400 transition-colors"
+        />
+        <span className="flex-1 text-sm text-slate-400 group-hover:text-slate-200 transition-colors truncate">
+          {subfolder.label}
+        </span>
+        {docs.length > 0 && (
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-500 border border-slate-700/60 shrink-0">
+            {docs.length}
+          </span>
+        )}
+        <button
+          onClick={(e) => { e.stopPropagation(); onUpload(subfolder.path); }}
+          className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-600 hover:text-teal-400 hover:bg-teal-900/30 transition-all shrink-0"
+          title={`Upload to ${subfolder.label}`}
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+        <svg
+          className={`w-3.5 h-3.5 text-slate-700 transition-transform shrink-0 ${effectiveIsOpen ? "rotate-90" : ""}`}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+
+      {/* Expanded content */}
+      {effectiveIsOpen && (
+        <div className="ml-6 mt-0.5 mb-1.5">
+          {visibleDocs.length > 0 ? (
+            <div className="space-y-px">
+              {visibleDocs.map((doc) => (
+                <DocumentRow key={doc.id} doc={doc} onDelete={onDelete} />
+              ))}
+            </div>
+          ) : (
+            !search.trim() && (
+              <p className="text-xs text-slate-700 px-3 py-1 italic">No documents yet</p>
+            )
+          )}
+
+          {/* Drop zone */}
+          <div
+            className="mt-1.5 rounded-lg border border-dashed border-slate-800 hover:border-teal-800/50 transition-colors cursor-pointer py-2.5 px-3 text-center"
+            onClick={() => onUpload(subfolder.path)}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <p className="text-xs text-slate-700">
+              Drop files here or{" "}
+              <span className="text-teal-700 hover:text-teal-500 transition-colors">click to upload</span>
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Folder Group ──────────────────────────────────────────────────────────────
+
+function FolderGroup({
+  group,
+  docs,
+  onUpload,
+  onDelete,
+  search,
+}: {
+  group: FolderGroupDef;
+  docs: CompanyDocument[];
+  onUpload: (folderPath: string, file?: File) => void;
+  onDelete: (id: string) => void;
+  search: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [openSubfolders, setOpenSubfolders] = useState<Set<string>>(new Set());
+
+  const hasSearchMatches = search.trim()
+    ? docs.some((d) => docMatchesSearch(d, search))
+    : false;
+  const effectiveIsOpen = (search.trim().length > 0 && hasSearchMatches) || isOpen;
+
+  function toggleSubfolder(path: string) {
+    setOpenSubfolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }
+
+  return (
+    <div className={`bg-[#0F1729] border ${group.borderColor} rounded-xl overflow-hidden`}>
+      {/* Group header */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex items-center gap-3 px-5 py-4 ${group.hoverBg} transition-colors`}
+      >
+        <span className="text-lg shrink-0">{group.icon}</span>
+        <span className="flex-1 text-left font-bold text-white tracking-widest text-xs uppercase">
+          {group.label}
+        </span>
+        {docs.length > 0 && (
+          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-800/80 border border-slate-700 shrink-0 ${group.accentText}`}>
+            {docs.length} {docs.length === 1 ? "file" : "files"}
+          </span>
+        )}
+        <svg
+          className={`w-4 h-4 text-slate-600 transition-transform shrink-0 ${effectiveIsOpen ? "rotate-180" : ""}`}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
+
+      {/* Subfolders */}
+      {effectiveIsOpen && (
+        <div className="border-t border-slate-800/50 px-3 py-2 space-y-px">
+          {group.subfolders.map((subfolder) => {
+            const subDocs = docs.filter((d) => getEffectiveFolderPath(d) === subfolder.path);
+            return (
+              <SubfolderRow
+                key={subfolder.path}
+                subfolder={subfolder}
+                docs={subDocs}
+                onUpload={onUpload}
+                onDelete={onDelete}
+                isOpen={openSubfolders.has(subfolder.path)}
+                onToggle={() => toggleSubfolder(subfolder.path)}
+                search={search}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -407,19 +671,16 @@ function EmptyState({
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<CompanyDocument[]>([]);
-  const [loading, setLoading]     = useState(true);
+  const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadType, setUploadType] = useState<CompanyDocumentType | undefined>();
-  const [typeFilter, setTypeFilter] = useState<CompanyDocumentType | "all">("all");
-  const [search, setSearch]         = useState("");
+  const [uploadFolderPath, setUploadFolderPath] = useState<string | undefined>();
+  const [uploadFile, setUploadFile] = useState<File | undefined>();
+  const [search, setSearch] = useState("");
 
   const loadDocuments = useCallback(async () => {
     setLoading(true);
     try {
-      const url = typeFilter !== "all"
-        ? `/api/documents?type=${typeFilter}`
-        : "/api/documents";
-      const res = await fetch(url);
+      const res = await fetch("/api/documents");
       if (res.ok) {
         const { documents: docs } = await res.json() as { documents: CompanyDocument[] };
         setDocuments(docs);
@@ -427,14 +688,20 @@ export default function DocumentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [typeFilter]);
+  }, []);
 
   useEffect(() => { void loadDocuments(); }, [loadDocuments]);
 
-  function handleUploadSuccess(doc: CompanyDocument) {
+  function openUpload(folderPath?: string, file?: File) {
+    setUploadFolderPath(folderPath);
+    setUploadFile(file);
+    setUploadOpen(true);
+  }
+
+  function handleUploadSuccess() {
     setUploadOpen(false);
-    setUploadType(undefined);
-    // Refresh so we get the signed URL attached
+    setUploadFolderPath(undefined);
+    setUploadFile(undefined);
     void loadDocuments();
   }
 
@@ -442,50 +709,75 @@ export default function DocumentsPage() {
     setDocuments((prev) => prev.filter((d) => d.id !== id));
   }
 
-  // Client-side text search on top of server-side type filter
-  const filtered = search.trim()
-    ? documents.filter((d) =>
-        d.document_name.toLowerCase().includes(search.toLowerCase()) ||
-        getMeta(d.document_type).label.toLowerCase().includes(search.toLowerCase()) ||
-        (d.notes ?? "").toLowerCase().includes(search.toLowerCase())
-      )
-    : documents;
-
-  // Expiry alerts
   const expiredDocs      = documents.filter((d) => expiryStatus(d.expires_at) === "expired");
   const expiringSoonDocs = documents.filter((d) => expiryStatus(d.expires_at) === "expiring_soon");
 
+  const foldersWithDocs = FOLDER_GROUPS.reduce((acc, g) => {
+    return acc + g.subfolders.filter((s) =>
+      documents.some((d) => getEffectiveFolderPath(d) === s.path)
+    ).length;
+  }, 0);
+
   return (
     <div className="min-h-screen bg-[#080E1A] text-white">
-      {/* Header */}
-      <header className="border-b border-slate-800 bg-[#080E1A]/90 backdrop-blur-sm sticky top-0 z-20 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="text-slate-400 hover:text-white text-sm transition-colors">Back</Link>
+      {/* Sticky header */}
+      <header className="border-b border-slate-800 bg-[#080E1A]/90 backdrop-blur-sm sticky top-0 z-20 px-6 py-3">
+        <div className="max-w-5xl mx-auto flex items-center gap-4">
+          {/* Nav */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Link href="/dashboard" className="text-slate-400 hover:text-white text-sm transition-colors">
+              Back
+            </Link>
             <span className="text-slate-700">/</span>
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
               </svg>
-              <h1 className="text-lg font-bold">Document Repository</h1>
+              <h1 className="text-base font-bold">Document Repository</h1>
             </div>
           </div>
+
+          {/* Search */}
+          <div className="flex-1 relative max-w-sm">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search documents…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-8 pr-8 py-1.5 bg-[#0F1729] border border-slate-800 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-teal-700 transition-colors"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
           <button
-            onClick={() => { setUploadType(undefined); setUploadOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold transition-colors"
+            onClick={() => openUpload()}
+            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Upload Document
+            Upload
           </button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-
-        {/* Expiry alerts banner */}
+      <main className="max-w-5xl mx-auto px-6 py-6 space-y-3">
+        {/* Expiry alerts */}
         {(expiredDocs.length > 0 || expiringSoonDocs.length > 0) && (
           <div className="space-y-2">
             {expiredDocs.length > 0 && (
@@ -515,217 +807,88 @@ export default function DocumentsPage() {
           </div>
         )}
 
-        {/* Search + filter bar */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search documents…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-[#0F1729] border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-teal-700"
-            />
-          </div>
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as CompanyDocumentType | "all")}
-            className="bg-[#0F1729] border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-teal-700"
-          >
-            <option value="all">All Types</option>
-            {COMPANY_DOCUMENT_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
-            ))}
-          </select>
-        </div>
+        {/* Stats row */}
+        {!loading && documents.length > 0 && (
+          <p className="text-xs text-slate-600 px-1">
+            {documents.length} document{documents.length !== 1 ? "s" : ""} across {foldersWithDocs} folder{foldersWithDocs !== 1 ? "s" : ""}
+          </p>
+        )}
 
-        {/* Category tiles — quick-upload shortcuts */}
-        <section>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Document Categories</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-            {COMPANY_DOCUMENT_TYPES.map((t) => {
-              const count = documents.filter((d) => d.document_type === t.value).length;
-              const hasExpired = documents.some(
-                (d) => d.document_type === t.value && expiryStatus(d.expires_at) === "expired"
-              );
-              const hasExpiring = documents.some(
-                (d) => d.document_type === t.value && expiryStatus(d.expires_at) === "expiring_soon"
-              );
-              const active = typeFilter === t.value;
-              return (
-                <button
-                  key={t.value}
-                  onClick={() => setTypeFilter(active ? "all" : t.value)}
-                  className={`relative text-left px-3 py-3 rounded-xl border transition-colors text-xs group ${
-                    active
-                      ? "bg-teal-900/40 border-teal-700/60 text-teal-200"
-                      : "bg-[#0F1729] border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
-                  }`}
-                >
-                  <span className="text-base block mb-1">{t.icon}</span>
-                  <span className="font-semibold block truncate">{t.label}</span>
-                  <span className={`block mt-0.5 ${active ? "text-teal-400" : "text-slate-600"}`}>
-                    {count} file{count !== 1 ? "s" : ""}
-                  </span>
-                  {/* Expiry dot indicator */}
-                  {(hasExpired || hasExpiring) && (
-                    <span className={`absolute top-2 right-2 w-2 h-2 rounded-full ${hasExpired ? "bg-red-500" : "bg-amber-500"}`} />
-                  )}
-                  {/* Quick-upload on hover */}
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => { e.stopPropagation(); setUploadType(t.value); setUploadOpen(true); }}
-                    onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); setUploadType(t.value); setUploadOpen(true); } }}
-                    className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-teal-400 hover:text-teal-300"
-                    title={`Upload ${t.label}`}
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Documents grid */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
-              {typeFilter === "all"
-                ? `All Documents (${filtered.length})`
-                : `${getMeta(typeFilter).label} (${filtered.length})`}
-            </h2>
-            {filtered.length > 0 && (
-              <p className="text-xs text-slate-600">{documents.length} total</p>
-            )}
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-[#0F1729] border border-slate-800 rounded-xl p-4 animate-pulse">
-                  <div className="h-4 bg-slate-800 rounded w-3/4 mb-2" />
-                  <div className="h-3 bg-slate-800 rounded w-1/2 mb-3" />
-                  <div className="h-5 bg-slate-800 rounded-full w-1/3" />
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="space-y-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-[#0F1729] border border-slate-800 rounded-xl animate-pulse">
+                <div className="flex items-center gap-3 px-5 py-4">
+                  <div className="w-5 h-5 rounded bg-slate-800" />
+                  <div className="h-4 bg-slate-800 rounded flex-1" />
+                  <div className="w-16 h-5 bg-slate-800 rounded-full" />
                 </div>
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              type={typeFilter}
-              onUpload={() => { setUploadType(typeFilter !== "all" ? typeFilter : undefined); setUploadOpen(true); }}
-            />
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map((doc) => (
-                <DocumentCard key={doc.id} doc={doc} onDelete={handleDelete} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Template Library */}
-        <section>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Template Library</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              {
-                name: "Rent Schedule Template",
-                description: "Track units, tenants, and rent collection",
-                icon: "🏠",
-                badge: "Rental Application",
-                href: "/templates/Rent_Schedule_Template.xlsx",
-                filename: "Rent_Schedule_Template.xlsx",
-                type: "Excel (.xlsx)",
-              },
-              {
-                name: "Annual Inspection Report",
-                description: "Comprehensive property inspection checklist for compliance",
-                icon: "🔍",
-                badge: "Annual Inspection",
-                href: "/templates/Annual_Inspection_Template.xlsx",
-                filename: "Annual_Inspection_Template.xlsx",
-                type: "Excel (.xlsx)",
-              },
-            {
-                name: "W-9 Form (IRS)",
-                description: "IRS Request for Taxpayer Identification Number and Certification — required by housing agencies before issuing payments",
-                icon: "🏛️",
-                badge: "W-9 Form",
-                href: "/templates/W9_Form.pdf",
-                filename: "W9_Form.pdf",
-                type: "PDF",
-              },
-            {
-                name: "Cost Containment Certification (Louisiana)",
-                description: "LHC-required cost containment certification signed by developer and general contractor at application",
-                icon: "📋",
-                badge: "Board Resolution",
-                href: "/templates/Cost_Containment_Louisiana.xlsm",
-                filename: "Cost_Containment_Louisiana.xlsm",
-                type: "Excel (.xlsm)",
-              },
-            ].map((tpl) => (
-              <div key={tpl.name} className="bg-[#0F1729] border border-slate-800 rounded-xl p-4 flex items-start gap-4 hover:border-teal-800/50 transition-colors">
-                <div className="w-10 h-10 rounded-xl bg-teal-900/30 border border-teal-800/40 flex items-center justify-center text-xl shrink-0">
-                  {tpl.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white">{tpl.name}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{tpl.description}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-900/40 text-teal-400 border border-teal-800/40 font-semibold">
-                      {tpl.badge}
-                    </span>
-                    <span className="text-[10px] text-slate-600">{tpl.type}</span>
-                  </div>
-                </div>
-                <a
-                  href={tpl.href}
-                  download={tpl.filename}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-800/40 hover:bg-teal-700/50 text-teal-300 text-xs font-semibold border border-teal-700/40 transition-colors"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download
-                </a>
               </div>
             ))}
           </div>
-        </section>
-
-        {/* Info cards for each document type */}
-        {typeFilter === "all" && documents.length === 0 && !loading && (
-          <section>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">What documents belong here?</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {COMPANY_DOCUMENT_TYPES.filter((t) => t.value !== "other").map((t) => (
-                <div key={t.value} className="bg-[#0F1729] border border-slate-800 rounded-xl px-4 py-3 flex gap-3 items-start">
-                  <span className="text-xl shrink-0 mt-0.5">{t.icon}</span>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-200">{t.label}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{t.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
         )}
 
+        {/* Empty state (no docs at all) */}
+        {!loading && documents.length === 0 && !search && (
+          <div className="text-center py-20">
+            <svg className="w-12 h-12 text-slate-700 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                d="M3 7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+            </svg>
+            <p className="text-slate-400 font-semibold mb-1">No documents yet</p>
+            <p className="text-slate-600 text-sm max-w-md mx-auto mb-6">
+              Upload LIHTC documents, construction contracts, vendor agreements, and company records —
+              all organized in one place.
+            </p>
+            <button
+              onClick={() => openUpload()}
+              className="px-5 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold transition-colors"
+            >
+              Upload your first document
+            </button>
+          </div>
+        )}
+
+        {/* Search empty state */}
+        {!loading && documents.length > 0 && search && !documents.some((d) => docMatchesSearch(d, search)) && (
+          <div className="text-center py-12">
+            <p className="text-slate-500 text-sm">No documents match &quot;{search}&quot;</p>
+            <button onClick={() => setSearch("")} className="mt-2 text-xs text-teal-500 hover:text-teal-400">
+              Clear search
+            </button>
+          </div>
+        )}
+
+        {/* Folder groups */}
+        {!loading && FOLDER_GROUPS.map((group) => {
+          const groupDocs = documents.filter((d) =>
+            getEffectiveFolderPath(d).startsWith(group.id + "/")
+          );
+          // Hide group when searching and no matches
+          if (search.trim() && !groupDocs.some((d) => docMatchesSearch(d, search))) return null;
+          return (
+            <FolderGroup
+              key={group.id}
+              group={group}
+              docs={groupDocs}
+              onUpload={openUpload}
+              onDelete={handleDelete}
+              search={search}
+            />
+          );
+        })}
       </main>
 
-      {/* Upload modal */}
       {uploadOpen && (
         <UploadModal
-          defaultType={uploadType}
-          onClose={() => { setUploadOpen(false); setUploadType(undefined); }}
+          defaultFolderPath={uploadFolderPath}
+          defaultFile={uploadFile}
+          onClose={() => {
+            setUploadOpen(false);
+            setUploadFolderPath(undefined);
+            setUploadFile(undefined);
+          }}
           onSuccess={handleUploadSuccess}
         />
       )}

@@ -507,6 +507,7 @@ export interface CompanyDocument {
   uploaded_at: string;
   expires_at: string | null;
   notes: string | null;
+  folder_path: string | null;
   // Added server-side at query time
   signed_url?: string;
 }
@@ -607,6 +608,111 @@ export interface UserSubscription {
   current_period_end: string | null;
   project_id: string | null;
   project_access_expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// =============================================================================
+// Vendor Marketplace Types
+// =============================================================================
+
+export type VendorType =
+  | "Architect"
+  | "Civil Engineer"
+  | "Structural Engineer"
+  | "MEP Engineer"
+  | "General Contractor"
+  | "Subcontractor"
+  | "Environmental Consultant"
+  | "Appraiser"
+  | "Surveyor"
+  | "Attorney"
+  | "Accountant/CPA"
+  | "Market Analyst"
+  | "Property Manager"
+  | "Title Company"
+  | "Tax Credit Syndicator"
+  | "Lender"
+  | "Other";
+
+export const VENDOR_TYPES: VendorType[] = [
+  "Architect", "Civil Engineer", "Structural Engineer", "MEP Engineer",
+  "General Contractor", "Subcontractor", "Environmental Consultant",
+  "Appraiser", "Surveyor", "Attorney", "Accountant/CPA", "Market Analyst",
+  "Property Manager", "Title Company", "Tax Credit Syndicator", "Lender", "Other",
+];
+
+export type VendorCertification = "DBE" | "MBE" | "WBE" | "Section 3" | "HUBZone" | "SDVOSB" | "VOSB" | "8(a)";
+
+export const VENDOR_CERTIFICATIONS: VendorCertification[] = [
+  "DBE", "MBE", "WBE", "Section 3", "HUBZone", "SDVOSB", "VOSB", "8(a)",
+];
+
+export type MarketplaceProjectType = "New Construction" | "Rehabilitation" | "Both";
+export type ProjectListingStatus = "open" | "in_review" | "awarded" | "closed";
+export type VendorBidStatus = "submitted" | "shortlisted" | "awarded" | "rejected";
+export type VendorPlan = "basic" | "professional" | "premium";
+
+export interface VendorProfile {
+  id: string;
+  user_id: string;
+  company_name: string;
+  contact_name: string;
+  email: string;
+  phone: string | null;
+  website: string | null;
+  vendor_type: VendorType;
+  license_number: string | null;
+  certifications: VendorCertification[];
+  service_areas: string[];
+  bio: string | null;
+  portfolio_url: string | null;
+  years_experience: number | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectListing {
+  id: string;
+  developer_user_id: string;
+  project_name: string;
+  project_address: string | null;
+  project_type: MarketplaceProjectType;
+  unit_count: number | null;
+  estimated_budget: number | null;
+  description: string;
+  services_needed: VendorType[];
+  status: ProjectListingStatus;
+  deadline: string | null;
+  bid_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VendorBid {
+  id: string;
+  listing_id: string;
+  vendor_id: string;
+  bid_amount: number | null;
+  proposal_text: string;
+  estimated_timeline: string | null;
+  attachments_url: string | null;
+  status: VendorBidStatus;
+  submitted_at: string;
+  updated_at: string;
+  vendor?: VendorProfile;
+  listing?: ProjectListing;
+}
+
+export interface VendorSubscription {
+  id: string;
+  vendor_user_id: string;
+  plan: VendorPlan;
+  stripe_subscription_id: string | null;
+  status: string;
+  current_period_start: string | null;
+  current_period_end: string | null;
   created_at: string;
   updated_at: string;
 }

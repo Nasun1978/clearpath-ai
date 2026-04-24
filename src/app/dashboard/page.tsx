@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { ProposalListItem, DashboardStats, ChecklistItem, TaskAssignment } from "@/types";
 import TrialBanner from "@/components/TrialBanner";
@@ -59,18 +59,7 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [deadlines, setDeadlines] = useState<DeadlineNotif[]>([]);
-  const [bellOpen, setBellOpen] = useState(false);
-  const bellRef = useRef<HTMLDivElement>(null);
   const [myAssignments, setMyAssignments] = useState<TaskAssignment[]>([]);
-
-  // Close bell dropdown when clicking outside
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
 
   useEffect(() => {
     async function load() {
@@ -114,152 +103,18 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="border-b border-slate-800 bg-[#080E1A]/90 backdrop-blur-sm sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold font-serif tracking-tight">
-              RipeSpot
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5 tracking-wide uppercase">
-              Real Estate Development Platform
-            </p>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <Link href="/dashboard/about" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
-              About
-            </Link>
-            <Link href="/dashboard/deals" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
-              Deal Pipeline
-            </Link>
-            <Link href="/dashboard/projects" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
-              Projects
-            </Link>
-            <Link href="/dashboard/financial" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
-              Financial Analysis
-            </Link>
-            <Link href="/dashboard/zoning" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
-              Zoning Lookup
-            </Link>
-            <Link href="/dashboard/compliance" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
-              HOME Compliance
-            </Link>
-            <Link href="/dashboard/checklist" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-900/40 text-teal-300 hover:bg-teal-800/50 border border-teal-800/50 transition-colors">
-              LIHTC Checklist
-            </Link>
-            <Link href="/dashboard/pilot-analysis" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-900/40 text-purple-300 hover:bg-purple-800/50 border border-purple-800/50 transition-colors">
-              PILOT Analysis
-            </Link>
-            <Link href="/marketplace" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-900/40 text-amber-300 hover:bg-amber-800/50 border border-amber-800/50 transition-colors flex items-center gap-1.5">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Marketplace
-            </Link>
-            <Link href="/dashboard/documents" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-900/40 text-teal-300 hover:bg-teal-800/50 border border-teal-800/50 transition-colors flex items-center gap-1.5">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-              </svg>
-              Documents
-            </Link>
-            <Link href="/dashboard/billing" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors flex items-center gap-1.5">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-              Billing
-            </Link>
-            <Link href="/dashboard/geomap" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-900/40 text-blue-300 hover:bg-blue-800/50 border border-blue-800/50 transition-colors flex items-center gap-1.5">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Geomap
-            </Link>
-
-            {/* Notification bell */}
-            <div ref={bellRef} className="relative">
-              <button
-                onClick={() => setBellOpen((o) => !o)}
-                className="relative p-2 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors"
-                aria-label="Deadline notifications"
-              >
-                <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                {(deadlines.filter((d) => d.urgency === "overdue" || d.urgency === "urgent").length > 0) && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold px-0.5">
-                    {deadlines.filter((d) => d.urgency === "overdue" || d.urgency === "urgent").length}
-                  </span>
-                )}
-              </button>
-
-              {/* Bell dropdown */}
-              {bellOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-[#0F1729] border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">Deadline Alerts</span>
-                    <Link href="/dashboard/checklist" onClick={() => setBellOpen(false)} className="text-xs text-teal-400 hover:text-teal-300">
-                      View checklist →
-                    </Link>
-                  </div>
-                  {deadlines.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-xs text-slate-500">No upcoming deadlines</div>
-                  ) : (
-                    <div className="max-h-72 overflow-y-auto divide-y divide-slate-800/60">
-                      {deadlines.slice(0, 8).map((n) => (
-                        <div key={n.itemId} className="px-4 py-3 flex items-start gap-3">
-                          <span className={`mt-0.5 shrink-0 w-1.5 h-1.5 rounded-full ${
-                            n.urgency === "overdue" ? "bg-red-500" :
-                            n.urgency === "urgent" ? "bg-red-400" : "bg-amber-400"
-                          }`} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-slate-300 leading-snug truncate">{n.itemText}</p>
-                            <p className="text-[10px] text-slate-500 mt-0.5">{n.checklistName}</p>
-                          </div>
-                          <span className={`shrink-0 text-[10px] font-semibold ${
-                            n.urgency === "overdue" ? "text-red-400" :
-                            n.urgency === "urgent" ? "text-red-400" : "text-amber-400"
-                          }`}>
-                            {formatNotifDate(n.due_date)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {deadlines.length > 8 && (
-                    <div className="px-4 py-2 border-t border-slate-800 text-center text-xs text-slate-500">
-                      +{deadlines.length - 8} more — <Link href="/dashboard/checklist" onClick={() => setBellOpen(false)} className="text-teal-400 hover:text-teal-300">view all</Link>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <a
-              href="mailto:steven@ripespotdevelopment.com?subject=RipeSpot%20Question"
-              className="p-2 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors"
-              aria-label="Contact support"
-              title="Contact Support"
-            >
-              <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </a>
-            <a
-              href="/submit"
-              className="px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-white hover:bg-brand-light transition-colors"
-            >
-              + New Proposal
-            </a>
-          </div>
+      {/* Page header */}
+      <header className="border-b border-slate-800 bg-[#080E1A]/90 backdrop-blur-sm sticky top-0 z-10 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-bold text-white">Dashboard</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Proposal overview</p>
         </div>
+        <a
+          href="/submit"
+          className="px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-white hover:bg-brand-light transition-colors"
+        >
+          + New Proposal
+        </a>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">

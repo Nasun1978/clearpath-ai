@@ -140,6 +140,34 @@ const PRODUCTS = [
       { key: 'government_advisory', nickname: 'Government Agency Advisory', amount: 500000, currency: 'usd', recurring: { interval: 'month' } },
     ],
   },
+  // --- Vendor Marketplace subscriptions ---
+  {
+    key:         'vendor_basic',
+    name:        'RipeSpot — Vendor Basic',
+    description: 'View up to 5 project listings per month and submit up to 3 bids. Basic vendor profile in the directory.',
+    metadata:    { plan: 'vendor_basic', ripespot_product: 'true' },
+    prices: [
+      { key: 'vendor_basic_monthly', nickname: 'Vendor Basic Monthly', amount: 2900, currency: 'usd', recurring: { interval: 'month' } },
+    ],
+  },
+  {
+    key:         'vendor_professional',
+    name:        'RipeSpot — Vendor Professional',
+    description: 'Unlimited project viewing, 10 bids per month, priority badge in vendor directory, and email alerts for new matching projects.',
+    metadata:    { plan: 'vendor_professional', ripespot_product: 'true' },
+    prices: [
+      { key: 'vendor_professional_monthly', nickname: 'Vendor Professional Monthly', amount: 7900, currency: 'usd', recurring: { interval: 'month' } },
+    ],
+  },
+  {
+    key:         'vendor_premium',
+    name:        'RipeSpot — Vendor Premium',
+    description: 'Unlimited bids, featured placement in vendor directory, direct developer messaging, and bid analytics.',
+    metadata:    { plan: 'vendor_premium', ripespot_product: 'true' },
+    prices: [
+      { key: 'vendor_premium_monthly', nickname: 'Vendor Premium Monthly', amount: 14900, currency: 'usd', recurring: { interval: 'month' } },
+    ],
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -250,6 +278,11 @@ async function main() {
     `STRIPE_PRICE_LIHTC_APP_SUPPORT=${results.lihtc_app_support ?? ''}`,
     `STRIPE_PRICE_MONTHLY_ADVISORY=${results.monthly_advisory  ?? ''}`,
     `STRIPE_PRICE_GOVERNMENT_ADVISORY=${results.government_advisory ?? ''}`,
+    ``,
+    `# Vendor Marketplace Stripe Price IDs`,
+    `STRIPE_PRICE_VENDOR_BASIC_MONTHLY=${results.vendor_basic_monthly ?? ''}`,
+    `STRIPE_PRICE_VENDOR_PROFESSIONAL_MONTHLY=${results.vendor_professional_monthly ?? ''}`,
+    `STRIPE_PRICE_VENDOR_PREMIUM_MONTHLY=${results.vendor_premium_monthly ?? ''}`,
   ];
 
   console.log(envLines.join('\n'));

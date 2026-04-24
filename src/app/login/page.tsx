@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   function enterDemo() {
     // Set a session cookie that middleware recognises for demo access
@@ -128,6 +129,28 @@ export default function LoginPage() {
               />
             </div>
 
+            {mode === "signup" && (
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  required
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500/30 focus:ring-1 shrink-0"
+                />
+                <span className="text-xs text-slate-400 leading-relaxed">
+                  I agree to the{" "}
+                  <a href="/terms" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">
+                    Terms of Service
+                  </a>{" "}
+                  and{" "}
+                  <a href="/privacy" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">
+                    Privacy Policy
+                  </a>
+                </span>
+              </label>
+            )}
+
             {error && (
               <div className="p-3 bg-red-900/20 border border-red-900/40 rounded-lg text-sm text-red-400">
                 {error}
@@ -156,7 +179,7 @@ export default function LoginPage() {
               <>
                 Don&apos;t have an account?{" "}
                 <button
-                  onClick={() => { setMode("signup"); setError(null); setMessage(null); }}
+                  onClick={() => { setMode("signup"); setError(null); setMessage(null); setAgreedToTerms(false); }}
                   className="text-teal-400 hover:text-teal-300 font-medium"
                 >
                   Sign up

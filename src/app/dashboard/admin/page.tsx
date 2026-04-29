@@ -54,6 +54,20 @@ export default function AdminPage() {
 
         {data && (
           <>
+            {/* LIHTC Pipeline shortcut */}
+            <Link
+              href="/dashboard/admin/lihtc-pipeline"
+              className="flex items-center justify-between bg-gradient-to-r from-amber-950/40 to-orange-950/30 border border-amber-800/40 rounded-xl px-5 py-4 hover:border-amber-700/60 transition-colors group"
+            >
+              <div>
+                <p className="text-sm font-bold text-amber-300">LIHTC Pipeline Tracker</p>
+                <p className="text-xs text-amber-600/80 mt-0.5">275 Houston properties · Map + deal tracking · Sell data to developers</p>
+              </div>
+              <svg className="w-5 h-5 text-amber-500 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+
             {/* Totals */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[

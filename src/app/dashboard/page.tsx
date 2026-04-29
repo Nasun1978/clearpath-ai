@@ -118,6 +118,30 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Admin shortcuts */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <Link href="/dashboard/admin"
+            className="flex items-center gap-3 bg-amber-950/40 border border-amber-800/50 rounded-xl px-4 py-3 hover:border-amber-600/60 hover:bg-amber-950/60 transition-colors group">
+            <svg className="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <div>
+              <p className="text-sm font-bold text-amber-300">Admin Panel</p>
+              <p className="text-[10px] text-amber-600">Users, stats, platform management</p>
+            </div>
+          </Link>
+          <Link href="/dashboard/admin/lihtc-pipeline"
+            className="flex items-center gap-3 bg-amber-950/40 border border-amber-800/50 rounded-xl px-4 py-3 hover:border-amber-600/60 hover:bg-amber-950/60 transition-colors group">
+            <svg className="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            <div>
+              <p className="text-sm font-bold text-amber-300">LIHTC Pipeline</p>
+              <p className="text-[10px] text-amber-600">275 Houston properties · Map · Sell data</p>
+            </div>
+          </Link>
+        </div>
+
         {/* Trial expiry banner — only renders when trial ends within 3 days */}
         <div className="mb-6">
           <TrialBanner />

@@ -2,6 +2,262 @@
 import { useState } from "react";
 import Link from "next/link";
 
+// ── Wage Tables sub-component ─────────────────────────────────────────────────
+
+const LA_WAGES = [
+  {
+    region: "New Orleans Metro (Orleans, Jefferson, St. Bernard, Plaquemines)",
+    gdNum: "LA20240018",
+    type: "Building",
+    trades: [
+      { trade: "Carpenter", base: 24.11, fringe: 12.35 },
+      { trade: "Cement Mason / Concrete Finisher", base: 19.24, fringe: 9.80 },
+      { trade: "Electrician (Inside Wireman)", base: 37.58, fringe: 22.50 },
+      { trade: "Iron Worker (Reinforcing)", base: 22.50, fringe: 9.00 },
+      { trade: "Iron Worker (Structural)", base: 24.00, fringe: 9.50 },
+      { trade: "Laborer (General)", base: 15.00, fringe: 7.90 },
+      { trade: "Laborer (Mason Tender)", base: 15.75, fringe: 7.90 },
+      { trade: "Operating Engineer (Crane)", base: 32.00, fringe: 18.50 },
+      { trade: "Operating Engineer (Grade / Backhoe)", base: 28.50, fringe: 17.00 },
+      { trade: "Painter (Brush / Roller)", base: 18.50, fringe: 8.50 },
+      { trade: "Pipefitter / Steamfitter", base: 36.00, fringe: 21.00 },
+      { trade: "Plumber", base: 34.50, fringe: 20.00 },
+      { trade: "Roofer", base: 18.00, fringe: 7.50 },
+      { trade: "Sheet Metal Worker", base: 29.00, fringe: 18.00 },
+      { trade: "Truck Driver", base: 16.50, fringe: 8.50 },
+    ],
+  },
+  {
+    region: "Baton Rouge Metro (East Baton Rouge, West Baton Rouge, Ascension, Livingston)",
+    gdNum: "LA20240003",
+    type: "Building",
+    trades: [
+      { trade: "Carpenter", base: 21.50, fringe: 11.00 },
+      { trade: "Cement Mason / Concrete Finisher", base: 17.50, fringe: 8.50 },
+      { trade: "Electrician (Inside Wireman)", base: 35.00, fringe: 21.00 },
+      { trade: "Iron Worker (Reinforcing)", base: 20.00, fringe: 8.50 },
+      { trade: "Laborer (General)", base: 13.50, fringe: 7.50 },
+      { trade: "Operating Engineer (Grade / Backhoe)", base: 26.00, fringe: 16.00 },
+      { trade: "Painter (Brush / Roller)", base: 16.75, fringe: 8.00 },
+      { trade: "Plumber / Pipefitter", base: 32.00, fringe: 19.00 },
+      { trade: "Roofer", base: 16.00, fringe: 7.00 },
+      { trade: "Sheet Metal Worker", base: 27.00, fringe: 17.00 },
+      { trade: "Truck Driver", base: 15.50, fringe: 8.00 },
+    ],
+  },
+  {
+    region: "Shreveport / North Louisiana (Caddo, Bossier, Webster)",
+    gdNum: "LA20240020",
+    type: "Building",
+    trades: [
+      { trade: "Carpenter", base: 19.50, fringe: 9.50 },
+      { trade: "Cement Mason / Concrete Finisher", base: 16.50, fringe: 8.00 },
+      { trade: "Electrician (Inside Wireman)", base: 31.00, fringe: 18.50 },
+      { trade: "Iron Worker", base: 18.50, fringe: 8.00 },
+      { trade: "Laborer (General)", base: 12.50, fringe: 7.00 },
+      { trade: "Operating Engineer", base: 24.00, fringe: 14.50 },
+      { trade: "Painter", base: 15.50, fringe: 7.50 },
+      { trade: "Plumber / Pipefitter", base: 28.00, fringe: 16.00 },
+      { trade: "Roofer", base: 14.50, fringe: 6.50 },
+      { trade: "Sheet Metal Worker", base: 24.00, fringe: 15.00 },
+    ],
+  },
+];
+
+const TX_WAGES = [
+  {
+    region: "Houston Metro (Harris, Fort Bend, Montgomery, Galveston)",
+    gdNum: "TX20240011",
+    type: "Building",
+    trades: [
+      { trade: "Carpenter", base: 20.00, fringe: 8.50 },
+      { trade: "Cement Mason / Concrete Finisher", base: 17.00, fringe: 7.50 },
+      { trade: "Electrician (Inside Wireman)", base: 34.00, fringe: 18.00 },
+      { trade: "Iron Worker (Reinforcing)", base: 18.50, fringe: 8.00 },
+      { trade: "Iron Worker (Structural)", base: 21.00, fringe: 8.50 },
+      { trade: "Laborer (General)", base: 13.00, fringe: 6.75 },
+      { trade: "Laborer (Mason Tender)", base: 13.50, fringe: 7.00 },
+      { trade: "Operating Engineer (Crane)", base: 28.50, fringe: 15.00 },
+      { trade: "Operating Engineer (Grade / Backhoe)", base: 25.00, fringe: 14.00 },
+      { trade: "Painter (Brush / Roller)", base: 16.00, fringe: 7.50 },
+      { trade: "Pipefitter / Steamfitter", base: 34.00, fringe: 19.50 },
+      { trade: "Plumber", base: 32.00, fringe: 18.50 },
+      { trade: "Roofer", base: 15.50, fringe: 7.00 },
+      { trade: "Sheet Metal Worker", base: 26.50, fringe: 15.00 },
+      { trade: "Truck Driver", base: 15.00, fringe: 7.00 },
+    ],
+  },
+  {
+    region: "Dallas / Fort Worth Metro (Dallas, Tarrant, Collin, Denton)",
+    gdNum: "TX20240005",
+    type: "Building",
+    trades: [
+      { trade: "Carpenter", base: 19.00, fringe: 8.00 },
+      { trade: "Cement Mason / Concrete Finisher", base: 16.50, fringe: 7.00 },
+      { trade: "Electrician (Inside Wireman)", base: 33.00, fringe: 18.00 },
+      { trade: "Iron Worker", base: 19.00, fringe: 8.00 },
+      { trade: "Laborer (General)", base: 12.50, fringe: 6.50 },
+      { trade: "Operating Engineer", base: 24.50, fringe: 13.00 },
+      { trade: "Painter", base: 15.00, fringe: 7.00 },
+      { trade: "Plumber / Pipefitter", base: 31.00, fringe: 17.50 },
+      { trade: "Roofer", base: 14.50, fringe: 6.50 },
+      { trade: "Sheet Metal Worker", base: 25.00, fringe: 14.50 },
+      { trade: "Truck Driver", base: 14.50, fringe: 6.75 },
+    ],
+  },
+  {
+    region: "San Antonio Metro (Bexar, Comal, Guadalupe)",
+    gdNum: "TX20240022",
+    type: "Building",
+    trades: [
+      { trade: "Carpenter", base: 18.50, fringe: 7.75 },
+      { trade: "Cement Mason / Concrete Finisher", base: 15.50, fringe: 7.00 },
+      { trade: "Electrician (Inside Wireman)", base: 31.50, fringe: 17.00 },
+      { trade: "Iron Worker", base: 17.50, fringe: 7.50 },
+      { trade: "Laborer (General)", base: 12.00, fringe: 6.25 },
+      { trade: "Operating Engineer", base: 23.00, fringe: 12.50 },
+      { trade: "Painter", base: 14.50, fringe: 6.75 },
+      { trade: "Plumber / Pipefitter", base: 29.50, fringe: 16.50 },
+      { trade: "Roofer", base: 14.00, fringe: 6.00 },
+      { trade: "Sheet Metal Worker", base: 24.00, fringe: 14.00 },
+    ],
+  },
+  {
+    region: "Austin Metro (Travis, Williamson, Hays, Bastrop)",
+    gdNum: "TX20240002",
+    type: "Building",
+    trades: [
+      { trade: "Carpenter", base: 20.00, fringe: 8.50 },
+      { trade: "Cement Mason / Concrete Finisher", base: 17.00, fringe: 7.50 },
+      { trade: "Electrician (Inside Wireman)", base: 34.50, fringe: 18.50 },
+      { trade: "Iron Worker", base: 19.50, fringe: 8.00 },
+      { trade: "Laborer (General)", base: 13.00, fringe: 6.50 },
+      { trade: "Operating Engineer", base: 25.00, fringe: 13.50 },
+      { trade: "Painter", base: 16.00, fringe: 7.25 },
+      { trade: "Plumber / Pipefitter", base: 32.00, fringe: 18.00 },
+      { trade: "Roofer", base: 15.00, fringe: 6.75 },
+      { trade: "Sheet Metal Worker", base: 26.00, fringe: 15.00 },
+    ],
+  },
+];
+
+function WageTables() {
+  const [wageState, setWageState] = useState<"LA" | "TX">("LA");
+  const [activeRegion, setActiveRegion] = useState(0);
+
+  const regions = wageState === "LA" ? LA_WAGES : TX_WAGES;
+  const region = regions[Math.min(activeRegion, regions.length - 1)];
+
+  function switchState(s: "LA" | "TX") {
+    setWageState(s);
+    setActiveRegion(0);
+  }
+
+  return (
+    <div>
+      {/* State toggle */}
+      <div className="flex gap-2 mb-4">
+        {(["LA", "TX"] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => switchState(s)}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+              wageState === s
+                ? "bg-amber-700 text-white border-amber-600"
+                : "bg-slate-800 text-slate-400 border-slate-700 hover:border-amber-700/50 hover:text-amber-300"
+            }`}
+          >
+            {s === "LA" ? "Louisiana" : "Texas"}
+          </button>
+        ))}
+      </div>
+
+      {/* Region tabs */}
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {regions.map((r, i) => (
+          <button
+            key={i}
+            onClick={() => setActiveRegion(i)}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold border transition-colors ${
+              activeRegion === i
+                ? "bg-amber-900/50 text-amber-300 border-amber-700/50"
+                : "bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300"
+            }`}
+          >
+            {r.region.split("(")[0].trim()}
+          </button>
+        ))}
+      </div>
+
+      {/* GD info + verify link */}
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div>
+          <p className="text-xs font-semibold text-slate-300">{region.region}</p>
+          <p className="text-[10px] text-slate-600 mt-0.5">
+            General Decision: {region.gdNum} · Type: {region.type} Construction
+          </p>
+        </div>
+        <a
+          href="https://sam.gov/content/wage-determinations"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300 border border-amber-800/40 px-2 py-1 rounded-lg transition-colors"
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          Verify current rates on SAM.gov
+        </a>
+      </div>
+
+      {/* Wage table */}
+      <div className="rounded-xl border border-slate-800 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-[#080E1A]/80 border-b border-slate-800">
+              <th className="text-left px-4 py-2.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">Trade Classification</th>
+              <th className="text-right px-4 py-2.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">Base Wage / hr</th>
+              <th className="text-right px-4 py-2.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">Fringe / hr</th>
+              <th className="text-right px-4 py-2.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">Total Package</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-800/50">
+            {region.trades.map((t) => (
+              <tr key={t.trade} className="hover:bg-slate-800/20">
+                <td className="px-4 py-2.5 text-sm text-slate-200">{t.trade}</td>
+                <td className="px-4 py-2.5 text-right text-sm font-semibold text-slate-200">${t.base.toFixed(2)}</td>
+                <td className="px-4 py-2.5 text-right text-xs text-slate-500">${t.fringe.toFixed(2)}</td>
+                <td className="px-4 py-2.5 text-right text-sm font-bold text-amber-300">${(t.base + t.fringe).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="mt-3 p-3 bg-amber-900/10 border border-amber-800/30 rounded-xl">
+        <p className="text-[10px] text-amber-600 leading-relaxed">
+          <strong className="text-amber-500">Disclaimer:</strong> Rates are representative estimates based on published 2024–2025 DOL general decisions and are for planning and budgeting purposes only. Actual prevailing wages vary by county/parish and are updated periodically by the Department of Labor. You <em>must</em> obtain the current binding wage determination from <strong>beta.sam.gov</strong> using the specific county and construction type before soliciting bids. Fringe benefits may be paid in cash or through bona fide benefit plans.
+        </p>
+      </div>
+
+      {/* Notes grid */}
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[
+          { label: "What counts as fringe?", body: "Health & welfare, pension/401k, vacation, apprenticeship training funds, and other bona fide benefit plan contributions all count toward the fringe benefit requirement." },
+          { label: "Cash in lieu of fringe", body: "If no bona fide benefit plan is in place, the full fringe amount must be paid in cash on top of the base wage, making the total package the minimum per-hour cost." },
+          { label: "Overtime (CWHSSA)", body: "The Contract Work Hours and Safety Standards Act requires overtime at 1.5× the basic rate (base only, not fringe) for hours over 40/week on federally funded contracts." },
+        ].map((item) => (
+          <div key={item.label} className="bg-slate-900/50 border border-slate-800 rounded-lg p-3">
+            <p className="text-[10px] font-bold text-slate-400 mb-1">{item.label}</p>
+            <p className="text-[10px] text-slate-500 leading-relaxed">{item.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type SectionId =
@@ -544,6 +800,22 @@ export default function CompliancePage() {
                   </div>
                 ))}
               </div>
+            </SectionCard>
+
+            <SectionCard>
+              <SectionTitle>
+                Prevailing Wages — Louisiana &amp; Texas
+                <Badge color="amber">Reference Rates</Badge>
+              </SectionTitle>
+              <p className="text-sm text-slate-400 mb-2 leading-relaxed">
+                Representative prevailing wage rates for residential and building construction in key markets.
+                Rates shown are base hourly wages; total package includes fringe benefits.
+                <strong className="text-amber-300"> Always obtain the official current wage determination from{" "}
+                <a href="https://sam.gov/content/wage-determinations" target="_blank" rel="noopener noreferrer" className="underline text-amber-300 hover:text-amber-200">beta.sam.gov</a>{" "}
+                before bidding.</strong> Rates below are based on 2024–2025 general decisions and are provided for planning purposes only.
+              </p>
+
+              <WageTables />
             </SectionCard>
 
             <SectionCard>

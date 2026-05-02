@@ -92,7 +92,7 @@ function PipelineMap({ properties, selected, onSelect }: {
       const L = (window as any).L;
       if (!mapRef.current) return;
 
-      const map = L.map(mapRef.current, { zoomControl: true }).setView([29.76, -95.37], 11);
+      const map = L.map(mapRef.current, { zoomControl: true }).setView([31.0, -91.5], 6);
       mapInstance.current = map;
 
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
@@ -444,11 +444,13 @@ function PropertyDrawer({ property, onClose, onUpdate }: {
 
 type ViewMode = "map" | "table";
 type TierFilter = "all" | "1" | "2" | "3" | "4";
+type StateFilter = "all" | "TX" | "LA" | "MS";
 
 export default function LIHTCPipelinePage() {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [view, setView] = useState<ViewMode>("table");
   const [tierFilter, setTierFilter] = useState<TierFilter>("all");
+  const [stateFilter, setStateFilter] = useState<StateFilter>("all");
   const [search, setSearch] = useState("");
   const [outreachFilter, setOutreachFilter] = useState("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -475,6 +477,7 @@ export default function LIHTCPipelinePage() {
   const filtered = useMemo(() => {
     return properties
       .filter((p) => {
+        if (stateFilter !== "all" && p.state !== stateFilter) return false;
         if (tierFilter !== "all" && !p.priorityTier.startsWith(tierFilter)) return false;
         if (outreachFilter !== "all" && p.outreachStatus !== outreachFilter) return false;
         if (search) {
@@ -520,6 +523,7 @@ export default function LIHTCPipelinePage() {
   const tier2 = properties.filter((p) => p.priorityTier.startsWith("2")).length;
   const totalUnits = properties.reduce((s, p) => s + p.totalUnits, 0);
   const mapped = properties.filter((p) => p.lat).length;
+  const stateCount = { TX: properties.filter(p => p.state === "TX").length, LA: properties.filter(p => p.state === "LA").length, MS: properties.filter(p => p.state === "MS").length };
 
   if (authorized === null) {
     return <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center"><div className="text-slate-500">Verifying access…</div></div>;
@@ -548,7 +552,7 @@ export default function LIHTCPipelinePage() {
                 <h1 className="text-lg font-bold text-white">LIHTC Pipeline</h1>
                 <span className="text-[10px] font-bold bg-red-900/50 text-red-400 border border-red-700/40 px-2 py-0.5 rounded-full uppercase tracking-wider">Admin Only</span>
               </div>
-              <p className="text-xs text-slate-500">Houston, TX · {properties.length} properties · {totalUnits.toLocaleString()} units</p>
+              <p className="text-xs text-slate-500">TX · LA · MS · {properties.length.toLocaleString()} properties · {totalUnits.toLocaleString()} units</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -588,10 +592,10 @@ export default function LIHTCPipelinePage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "Tier 1 — Immediate", value: tier1, color: "text-red-400" },
-            { label: "Tier 2 — High Priority", value: tier2, color: "text-orange-400" },
+            { label: "Tier 1 — Immediate", value: tier1.toLocaleString(), color: "text-red-400" },
+            { label: "Tier 2 — High Priority", value: tier2.toLocaleString(), color: "text-orange-400" },
             { label: "Total Units", value: totalUnits.toLocaleString(), color: "text-teal-400" },
-            { label: "Geocoded on Map", value: `${mapped} / ${properties.length}`, color: "text-blue-400" },
+            { label: "Geocoded on Map", value: `${mapped.toLocaleString()} / ${properties.length.toLocaleString()}`, color: "text-blue-400" },
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-[#0F1729] border border-slate-800 rounded-xl p-4">
               <p className={`text-2xl font-bold ${color}`}>{value}</p>
@@ -609,6 +613,20 @@ export default function LIHTCPipelinePage() {
             placeholder="Search property name, address, HUD ID…"
             className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-slate-500 w-64"
           />
+          {/* State filter */}
+          <div className="flex gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1">
+            {(["all", "TX", "LA", "MS"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStateFilter(s)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  stateFilter === s ? "bg-amber-700 text-white" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {s === "all" ? "All States" : `${s} (${stateCount[s as keyof typeof stateCount] ?? 0})`}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1">
             {(["all", "1", "2", "3", "4"] as const).map((t) => (
               <button

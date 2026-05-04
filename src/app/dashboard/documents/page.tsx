@@ -9,6 +9,7 @@ interface DocumentSubfolder {
   path: string;
   label: string;
   description: string;
+  templates?: { name: string; url: string }[];
 }
 
 interface FolderGroupDef {
@@ -50,7 +51,14 @@ const FOLDER_GROUPS: FolderGroupDef[] = [
     accentText: "text-amber-400",
     subfolders: [
       { path: "construction/documents",      label: "Construction Documents", description: "Plans, specifications, drawings, as-builts" },
-      { path: "construction/contracts",      label: "Construction Contracts", description: "GC contract, schedule of values, change orders" },
+      {
+        path: "construction/contracts",
+        label: "Construction Contracts",
+        description: "GC contract, schedule of values, change orders, draw requests",
+        templates: [
+          { name: "Construction Draw Template (Excel)", url: "/api/templates/construction-draw" },
+        ],
+      },
       { path: "construction/davis_bacon",    label: "Davis-Bacon Wages",      description: "Wage determinations, certified payroll, employee interviews" },
       { path: "construction/dbe_mbe_wbe",    label: "DBE/MBE/WBE",           description: "DBE plan, certifications, utilization reports, good faith efforts" },
       { path: "construction/building_permits", label: "Building Permits",     description: "Permit applications, approvals, inspections" },
@@ -556,6 +564,28 @@ function SubfolderRow({
       {/* Expanded content */}
       {effectiveIsOpen && (
         <div className="ml-6 mt-0.5 mb-1.5">
+          {/* Downloadable templates for this subfolder */}
+          {subfolder.templates && subfolder.templates.length > 0 && (
+            <div className="mb-2 flex flex-wrap items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-900/10 border border-amber-800/30">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-500/80 mr-1">
+                Templates
+              </span>
+              {subfolder.templates.map((t) => (
+                <a
+                  key={t.url}
+                  href={t.url}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-900/30 hover:bg-amber-800/40 border border-amber-700/50 text-[11px] font-medium text-amber-200 hover:text-amber-100 transition-colors"
+                  download
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                  </svg>
+                  {t.name}
+                </a>
+              ))}
+            </div>
+          )}
+
           {visibleDocs.length > 0 ? (
             <div className="space-y-px">
               {visibleDocs.map((doc) => (

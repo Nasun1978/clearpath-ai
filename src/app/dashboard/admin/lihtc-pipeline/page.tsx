@@ -34,6 +34,9 @@ interface Property {
   nextAction: string;
   lat: number | null;
   lng: number | null;
+  allocAmt?: number;          // HUD annual LIHTC allocation
+  creditType?: string;        // "9%" | "4%" | "Both" | "Unknown"
+  tdcEstimate?: number;       // Total dev cost estimate from allocation × applicable %
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -697,6 +700,9 @@ export default function LIHTCPipelinePage() {
                         Yr-30 {sortCol === "year30Ends" && (sortDir === "asc" ? "↑" : "↓")}
                       </button>
                     </th>
+                    <th className="px-3 py-3 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider" title="Estimated total development cost — derived from HUD allocation × applicable %">
+                      Est. TDC
+                    </th>
                     <th className="px-3 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Compliance</th>
                     <th className="px-3 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Outreach</th>
                     <th className="px-3 py-3 w-12"></th>
@@ -729,6 +735,20 @@ export default function LIHTCPipelinePage() {
                         <td className="px-3 py-3 text-center text-xs text-slate-300">{p.year15Ends ?? "—"}</td>
                         <td className={`px-3 py-3 text-center text-xs font-semibold ${p.year30Ends && p.year30Ends <= 2026 ? "text-red-400" : "text-slate-300"}`}>
                           {p.year30Ends ?? "—"}
+                        </td>
+                        <td className="px-3 py-3 text-right text-xs">
+                          {p.tdcEstimate ? (
+                            <div>
+                              <span className="font-semibold text-emerald-300">
+                                ${(p.tdcEstimate / 1e6).toFixed(1)}M
+                              </span>
+                              <span className="block text-[9px] text-slate-600">
+                                ~${Math.round(p.tdcEstimate / p.totalUnits / 1000)}K/unit · {p.creditType}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-700">—</span>
+                          )}
                         </td>
                         <td className="px-3 py-3 text-xs text-slate-400 max-w-[160px] truncate">{p.complianceStatus}</td>
                         <td className="px-3 py-3">

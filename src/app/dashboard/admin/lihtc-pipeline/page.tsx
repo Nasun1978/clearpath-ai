@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
-import PROPERTIES_RAW from "./data.json";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -36,8 +35,6 @@ interface Property {
   lat: number | null;
   lng: number | null;
 }
-
-const PROPERTIES = PROPERTIES_RAW as Property[];
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -157,7 +154,7 @@ function PipelineMap({ properties, selected, onSelect }: {
 
 // ── Sell to Developer modal ───────────────────────────────────────────────────
 
-function SellModal({ onClose, selectedIds }: { onClose: () => void; selectedIds: string[] }) {
+function SellModal({ onClose, selectedIds, properties }: { onClose: () => void; selectedIds: string[]; properties: Property[] }) {
   const [pkg, setPkg] = useState<string>("tier1");
   const [buyerEmail, setBuyerEmail] = useState("");
   const [buyerName, setBuyerName] = useState("");
@@ -172,7 +169,7 @@ function SellModal({ onClose, selectedIds }: { onClose: () => void; selectedIds:
     ? selectedIds.length
     : pkg === "full"
     ? 275
-    : PROPERTIES.filter((p) => {
+    : properties.filter((p) => {
         if (pkg === "tier1") return p.priorityTier === "1 — Immediate outreach";
         if (pkg === "tier2") return ["1 — Immediate outreach", "2 — High priority"].includes(p.priorityTier);
         return true;
@@ -245,7 +242,7 @@ function SellModal({ onClose, selectedIds }: { onClose: () => void; selectedIds:
                     ? selectedIds.length
                     : p.id === "full"
                     ? 275
-                    : PROPERTIES.filter((pr) => p.tier ? pr.priorityTier === p.tier || (p.id === "tier2" && pr.priorityTier === "1 — Immediate outreach") : true).length;
+                    : properties.filter((pr) => p.tier ? pr.priorityTier === p.tier || (p.id === "tier2" && pr.priorityTier === "1 — Immediate outreach") : true).length;
                   return (
                     <label key={p.id}
                       className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
@@ -455,12 +452,12 @@ export default function LIHTCPipelinePage() {
   const [outreachFilter, setOutreachFilter] = useState("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
-  const [properties, setProperties] = useState<Property[]>(PROPERTIES);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [showSell, setShowSell] = useState(false);
   const [sortCol, setSortCol] = useState<"name" | "priorityScore" | "totalUnits" | "year15Ends" | "year30Ends">("priorityScore");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // Admin gate
+  // Admin gate + load properties
   useEffect(() => {
     fetch("/api/admin/stats")
       .then((r) => {
@@ -468,6 +465,13 @@ export default function LIHTCPipelinePage() {
         else setAuthorized(true);
       })
       .catch(() => setAuthorized(false));
+
+    fetch("/api/admin/lihtc-pipeline")
+      .then((r) => r.json())
+      .then((d: { properties?: Property[]; error?: string }) => {
+        if (d.properties) setProperties(d.properties);
+      })
+      .catch(() => { /* swallow — admin gate will show error */ });
   }, []);
 
   function updateProperty(id: string, field: string, value: string) {
@@ -766,6 +770,7 @@ export default function LIHTCPipelinePage() {
         <SellModal
           onClose={() => setShowSell(false)}
           selectedIds={[...checkedIds]}
+          properties={properties}
         />
       )}
     </div>

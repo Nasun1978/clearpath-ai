@@ -180,6 +180,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/dashboard", label: "Dashboard", icon: <HomeIcon /> },
       { href: "/dashboard/admin", label: "Admin Panel", icon: <AdminIcon />, accent: "amber" },
       { href: "/dashboard/admin/lihtc-pipeline", label: "LIHTC Pipeline", icon: <PipelineMapIcon />, accent: "amber" },
+      { href: "/dashboard/admin/cra-investors", label: "CRA Investors", icon: <PipelineMapIcon />, accent: "amber" },
     ],
   },
   {
@@ -332,6 +333,7 @@ export default function DashboardSidebar({ deadlineCount = 0, onBellClick }: Das
         {[
           { href: "/dashboard/admin", label: "Admin Panel", icon: <AdminIcon /> },
           { href: "/dashboard/admin/lihtc-pipeline", label: "LIHTC Pipeline", icon: <PipelineMapIcon /> },
+          { href: "/dashboard/admin/cra-investors", label: "CRA Investors", icon: <PipelineMapIcon /> },
         ].map((item) => (
           <Link
             key={item.href}

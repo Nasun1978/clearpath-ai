@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import DashboardSidebar from "@/components/DashboardSidebar";
+import GlobalSearch from "@/components/GlobalSearch";
 import type { ChecklistItem } from "@/types";
 
 interface DeadlineNotif {
@@ -46,6 +47,7 @@ function formatNotifDate(dateStr: string): string {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [deadlines, setDeadlines] = useState<DeadlineNotif[]>([]);
   const [bellOpen, setBellOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,6 +72,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen((o) => !o);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const urgentCount = deadlines.filter((d) => d.urgency === "overdue" || d.urgency === "urgent").length;
 
   return (
@@ -77,7 +90,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <DashboardSidebar
         deadlineCount={urgentCount}
         onBellClick={() => setBellOpen((o) => !o)}
+        onSearchClick={() => setSearchOpen(true)}
       />
+
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* Bell dropdown — rendered at layout level so it's above page content */}
       {bellOpen && (

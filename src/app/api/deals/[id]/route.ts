@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/supabase";
+import { encryptFields, decryptFields } from "@/lib/encryption";
 import type { Deal, DealStage } from "@/types";
+
+const DEAL_ENCRYPTED_FIELDS: (keyof Deal)[] = ["address", "notes"];
 
 const VALID_STAGES: DealStage[] = [
   "prospecting", "due_diligence", "under_contract", "closed",
@@ -38,16 +41,20 @@ export async function PATCH(
     if (body.notes !== undefined) updates.notes = body.notes;
     if (body.sort_order !== undefined) updates.sort_order = body.sort_order;
 
+    // Encrypt any text fields before writing
+    const encryptedUpdates = encryptFields(updates, user.id, DEAL_ENCRYPTED_FIELDS);
+
     // RLS ensures the user can only update their own rows
     const { data, error } = await supabase
       .from("deals")
-      .update(updates)
+      .update(encryptedUpdates)
       .eq("id", params.id)
       .select()
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ deal: data as Deal });
+    const deal = decryptFields(data as Deal, user.id, DEAL_ENCRYPTED_FIELDS);
+    return NextResponse.json({ deal });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest, createServerClient } from "@/lib/supabase";
+import { encryptFields, decryptRecords } from "@/lib/encryption";
 import type { CompanyDocument } from "@/types";
 import { COMPANY_DOCUMENT_TYPES } from "@/types";
+
+const DOC_ENCRYPTED_FIELDS: (keyof CompanyDocument)[] = ["document_name", "notes"];
 
 const VALID_TYPES = COMPANY_DOCUMENT_TYPES.map((t) => t.value);
 const SIGNED_URL_EXPIRY = 3600; // 1 hour
@@ -48,7 +51,8 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return NextResponse.json({ documents: docs });
+    const decrypted = decryptRecords(docs as CompanyDocument[], user.id, DOC_ENCRYPTED_FIELDS);
+    return NextResponse.json({ documents: decrypted });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Unknown error" }, { status: 500 });
   }
@@ -77,24 +81,31 @@ export async function POST(request: NextRequest) {
       ? body.document_type
       : "other";
 
+    const plainText = {
+      document_name: body.document_name.trim(),
+      notes: body.notes?.trim() ?? null,
+    };
+    const encrypted = encryptFields(plainText, user.id, ["document_name", "notes"]);
+
     const { data, error } = await supabase
       .from("company_documents")
       .insert({
         user_id:       user.id,
         document_type: docType,
-        document_name: body.document_name.trim(),
+        document_name: encrypted.document_name,
         file_url:      body.file_url ?? "",
         file_path:     body.file_path.trim(),
         file_size:     body.file_size ?? null,
         expires_at:    body.expires_at ?? null,
-        notes:         body.notes?.trim() ?? null,
+        notes:         encrypted.notes,
         folder_path:   body.folder_path ?? null,
       })
       .select()
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ document: data as CompanyDocument }, { status: 201 });
+    const document = decryptRecords([data as CompanyDocument], user.id, DOC_ENCRYPTED_FIELDS)[0];
+    return NextResponse.json({ document }, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Unknown error" }, { status: 500 });
   }

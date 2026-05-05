@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/supabase";
+import { encryptFields, decryptRecords } from "@/lib/encryption";
 import type { Deal, DealStage } from "@/types";
+
+const DEAL_ENCRYPTED_FIELDS: (keyof Deal)[] = ["address", "notes"];
 
 const VALID_STAGES: DealStage[] = [
   "prospecting", "due_diligence", "under_contract", "closed",
@@ -28,7 +31,8 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: true });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ deals: data as Deal[] });
+    const deals = decryptRecords(data as Deal[], user.id, DEAL_ENCRYPTED_FIELDS);
+    return NextResponse.json({ deals });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
@@ -58,22 +62,28 @@ export async function POST(request: NextRequest) {
       ? (body.stage as DealStage)
       : "prospecting";
 
+    const plainPayload = {
+      address: body.address.trim(),
+      notes: body.notes?.trim() || null,
+    };
+    const encrypted = encryptFields(plainPayload, user.id, ["address", "notes"]);
+
     const { data, error } = await supabase
       .from("deals")
       .insert({
-        address: body.address.trim(),
+        ...encrypted,
         price: body.price ?? null,
         projected_roi: body.projected_roi ?? null,
         stage,
-        notes: body.notes?.trim() || null,
         sort_order: 0,
-        user_id: user.id,  // belt-and-suspenders alongside DB trigger
+        user_id: user.id,
       })
       .select()
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ deal: data as Deal }, { status: 201 });
+    const deal = decryptRecords([data as Deal], user.id, DEAL_ENCRYPTED_FIELDS)[0];
+    return NextResponse.json({ deal }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },

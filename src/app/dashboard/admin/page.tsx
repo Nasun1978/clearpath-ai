@@ -4,22 +4,29 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { AdminStatsResponse, AdminUserRow } from "@/app/api/admin/stats/route";
 
+interface EncryptionStatus {
+  configured: boolean;
+  fingerprint: string | null;
+  algorithm: string;
+  keyDerivation: string;
+  protectedTables: { table: string; fields: string[] }[];
+}
+
 export default function AdminPage() {
   const [data, setData] = useState<AdminStatsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [enc, setEnc] = useState<EncryptionStatus | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/stats")
-      .then(async (r) => {
-        const json = await r.json() as AdminStatsResponse & { error?: string };
-        if (!r.ok) {
-          setError((json.error as string) ?? "Failed to load");
-        } else {
-          setData(json);
-        }
-      })
-      .catch(() => setError("Request failed"))
+    Promise.all([
+      fetch("/api/admin/stats").then((r) => r.json()),
+      fetch("/api/admin/encryption").then((r) => r.json()),
+    ]).then(([stats, encStatus]) => {
+      if (stats.error) setError(stats.error ?? "Failed to load");
+      else setData(stats as AdminStatsResponse);
+      if (!encStatus.error) setEnc(encStatus as EncryptionStatus);
+    }).catch(() => setError("Request failed"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -144,6 +151,83 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+            {/* Encryption Status */}
+            {enc && (
+              <div className="bg-[#0F1729] border border-slate-800 rounded-xl overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <h2 className="text-sm font-semibold text-slate-300">Field-Level Encryption</h2>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                    enc.configured
+                      ? "bg-teal-900/40 text-teal-300 border-teal-700/50"
+                      : "bg-red-900/40 text-red-300 border-red-700/50"
+                  }`}>
+                    {enc.configured ? "ACTIVE" : "NOT CONFIGURED"}
+                  </span>
+                </div>
+
+                <div className="px-5 py-5 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Key details */}
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Master Key</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between py-2 border-b border-slate-800/60">
+                        <span className="text-xs text-slate-500">Algorithm</span>
+                        <span className="text-xs font-mono text-teal-300">{enc.algorithm}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-2 border-b border-slate-800/60">
+                        <span className="text-xs text-slate-500">Key Derivation</span>
+                        <span className="text-xs font-mono text-teal-300">{enc.keyDerivation}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-2 border-b border-slate-800/60">
+                        <span className="text-xs text-slate-500">Key Fingerprint</span>
+                        <span className="text-xs font-mono text-slate-300">
+                          {enc.fingerprint ? `${enc.fingerprint}…` : "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-xs text-slate-500">Storage</span>
+                        <span className="text-xs text-slate-300">Vercel env var</span>
+                      </div>
+                    </div>
+                    {!enc.configured && (
+                      <div className="p-3 bg-red-900/20 border border-red-700/30 rounded-xl">
+                        <p className="text-xs text-red-300 leading-relaxed">
+                          <span className="font-semibold">Action required:</span> Set{" "}
+                          <code className="font-mono bg-red-950/50 px-1 rounded">ENCRYPTION_MASTER_KEY</code>{" "}
+                          in Vercel → Settings → Environment Variables. Generate with:{" "}
+                          <code className="font-mono bg-red-950/50 px-1 rounded">
+                            node -e &quot;console.log(require(&apos;crypto&apos;).randomBytes(32).toString(&apos;hex&apos;))&quot;
+                          </code>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Protected tables */}
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Protected Tables</p>
+                    <div className="space-y-2">
+                      {enc.protectedTables.map((t) => (
+                        <div key={t.table} className="flex items-start justify-between py-2 border-b border-slate-800/60">
+                          <span className="text-xs font-mono text-slate-300">{t.table}</span>
+                          <span className="text-xs text-slate-500 text-right">{t.fields.join(", ")}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-slate-600 leading-relaxed">
+                      Each user&apos;s fields are encrypted with a unique key derived from the master key + their user ID.
+                      Only you can decrypt data from all users.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </main>

@@ -4,12 +4,16 @@
   "private": true,
   "description": "RipeSpot — Agentic Intelligence for Affordable Housing Compliance",
   "author": "REO, LLC",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "electron:dev": "concurrently --kill-others \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "next build && electron-builder",
+    "electron:dist": "next build && electron-builder --publish never"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -30,10 +34,46 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.0",
+    "concurrently": "^9.2.1",
+    "electron": "^41.5.0",
+    "electron-builder": "^26.8.1",
     "eslint": "^9.0.0",
     "eslint-config-next": "^14.2.0",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "wait-on": "^9.0.5"
+  },
+  "build": {
+    "appId": "com.reo.ripespot",
+    "productName": "RipeSpot",
+    "copyright": "Copyright © 2025 REO, LLC",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "darkModeSupport": true,
+      "target": [
+        { "target": "dmg", "arch": ["universal"] },
+        { "target": "zip", "arch": ["universal"] }
+      ],
+      "icon": "electron/assets/icon.icns"
+    },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "electron/assets/icon.ico"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "electron/assets/icon.png"
+    },
+    "files": [
+      "electron/**/*",
+      "!electron/assets"
+    ],
+    "extraResources": [
+      { "from": ".next/standalone", "to": ".next/standalone" },
+      { "from": ".next/static",     "to": ".next/standalone/.next/static" },
+      { "from": "public",           "to": ".next/standalone/public" }
+    ],
+    "asar": true
   }
 }
